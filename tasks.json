@@ -1,0 +1,129 @@
+{
+  "common_requirements": {
+    "description": "모든 에이전트에 공통 적용. 각 태스크 프롬프트 앞에 붙여서 Claude Code에 입력.",
+    "template": "다음 공통 조건을 반드시 지켜서 만들어줘:\n- Python 3.11+\n- 설정은 config.yaml로 관리 (API 키, 키워드, 저장 경로 등)\n- API 키는 .env 파일로 관리 (python-dotenv 사용)\n- 실행 로그는 logs/ 폴더에 날짜별로 저장\n- 결과물은 output/ 폴더에 날짜별로 저장\n- 실행 진입점은 main.py (python main.py 로 실행)\n- requirements.txt 포함\n- README.md에 설치방법, 실행방법, config 설명 포함\n- 에러 발생시 로그에 기록하고 계속 실행 (crash 방지)\n- 모든 주석과 README는 한국어로 작성\n\n[태스크 설명]"
+  },
+  "tasks": [
+    {
+      "id": 1,
+      "title": "arXiv 논문 요약 에이전트",
+      "status": "in_progress",
+      "prompt": "arXiv에서 AI/ML 관련 논문을 매일 자동 수집하고 한국어로 요약해주는 에이전트를 만들어줘.\n- config.yaml에서 키워드 목록 설정 가능 (예: LLM, multi-agent, RAG)\n- arxiv 공식 API (feedparser) 사용\n- 논문별로 제목, 저자, 초록 요약(3줄), 링크 수집\n- 요약은 Claude API 사용 (anthropic 라이브러리)\n- 결과를 output/YYYY-MM-DD.md 로 저장\n- 하루 최대 수집 논문 수 config로 설정 가능 (기본값 10개)",
+      "updated_at": "2026-03-30T17:43:48.983996"
+    },
+    {
+      "id": 2,
+      "title": "GitHub 트렌딩 분석 에이전트",
+      "status": "todo",
+      "prompt": "GitHub 트렌딩 레포지토리를 매일 수집하고 기술 트렌드를 분석해주는 에이전트를 만들어줘.\n- GitHub 트렌딩 페이지 스크래핑 (requests + BeautifulSoup)\n- config.yaml에서 언어 필터 설정 가능 (예: Python, TypeScript)\n- 수집 항목: 레포 이름, 설명, 스타수, 오늘 스타증가수, 언어\n- 주간 트렌드 비교 (이번주 vs 지난주)\n- 결과를 output/YYYY-MM-DD.md 로 저장\n- 상위 20개 레포 수집"
+    },
+    {
+      "id": 3,
+      "title": "AI 뉴스 수집 + 인사이트 에이전트",
+      "status": "todo",
+      "prompt": "AI 관련 뉴스를 매일 수집하고 핵심 인사이트를 추출해주는 에이전트를 만들어줘.\n- RSS 피드 기반 수집 (feedparser)\n- config.yaml에서 RSS URL 목록 설정 가능\n- 기본 포함 피드: TechCrunch AI, MIT Technology Review, The Verge AI\n- 수집 항목: 제목, 요약, 링크, 발행시간\n- Claude API로 오늘의 핵심 인사이트 3가지 추출\n- 카테고리 자동 분류 (모델 출시 / 투자 / 정책 / 연구)\n- 결과를 output/YYYY-MM-DD.md 로 저장"
+    },
+    {
+      "id": 4,
+      "title": "Meta Ad Library 스크래퍼 에이전트",
+      "status": "todo",
+      "prompt": "Meta Ad Library에서 특정 키워드 광고를 수집하고 카피 패턴을 분석해주는 에이전트를 만들어줘.\n- Meta Ad Library 공개 페이지 스크래핑 (selenium + BeautifulSoup)\n- config.yaml에서 검색 키워드, 국가 설정 가능\n- 수집 항목: 광고주명, 광고 카피 텍스트, 시작일, 플랫폼, 광고 형식\n- Claude API로 카피 패턴 분석 (CTA 패턴, 감성, 길이)\n- 결과를 output/YYYY-MM-DD.json + output/YYYY-MM-DD_analysis.md 로 저장\n- 한 번 실행에 최대 50개 광고 수집"
+    },
+    {
+      "id": 5,
+      "title": "네이버 DataLab 트렌드 모니터 에이전트",
+      "status": "todo",
+      "prompt": "네이버 DataLab API로 키워드 트렌드를 매일 모니터링하는 에이전트를 만들어줘.\n- 네이버 DataLab 검색어 트렌드 API 사용\n- config.yaml에서 모니터링할 키워드 목록 설정 가능\n- 전일 대비 급상승 키워드 감지 (기준값 config로 설정)\n- 급상승 감지시 터미널에 알림 출력\n- matplotlib으로 키워드별 30일 트렌드 그래프 생성\n- 결과를 output/YYYY-MM-DD.csv + output/YYYY-MM-DD.md 로 저장"
+    },
+    {
+      "id": 6,
+      "title": "경쟁사 블로그 모니터링 에이전트",
+      "status": "todo",
+      "prompt": "특정 회사들의 블로그를 모니터링하고 새 글이 올라오면 요약해주는 에이전트를 만들어줘.\n- RSS 피드 기반 수집 (feedparser)\n- config.yaml에서 모니터링할 블로그 RSS URL 목록 설정\n- 마지막 실행 이후 새로 올라온 글만 수집 (last_checked.json으로 상태 관리)\n- Claude API로 각 글 3줄 요약 + 핵심 키워드 추출\n- 회사별로 분류해서 output/YYYY-MM-DD.md 로 저장\n- 새 글 없으면 로그에만 기록하고 종료"
+    },
+    {
+      "id": 7,
+      "title": "유튜브 트렌딩 분석 에이전트",
+      "status": "todo",
+      "prompt": "YouTube Data API로 트렌딩 영상을 수집하고 콘텐츠 인사이트를 추출해주는 에이전트를 만들어줘.\n- YouTube Data API v3 사용\n- config.yaml에서 국가 코드, 카테고리 설정 가능 (기본: KR)\n- 수집 항목: 제목, 채널명, 조회수, 좋아요수, 댓글수, 태그\n- Claude API로 제목 패턴 분석 (어떤 제목이 트렌딩인지)\n- 카테고리별 상위 10개 수집\n- 결과를 output/YYYY-MM-DD.md 로 저장"
+    },
+    {
+      "id": 8,
+      "title": "코드 리뷰 에이전트",
+      "status": "todo",
+      "prompt": "코드 파일이나 git diff를 입력하면 리뷰해주는 에이전트를 만들어줘.\n- CLI 인자로 파일 경로 받기 (python main.py --file app.py)\n- 리뷰 관점: 버그 가능성 / 성능 / 가독성 / 보안 / 테스트 누락\n- 각 관점별 심각도 표시 (🔴 critical / 🟡 warning / 🟢 suggestion)\n- Claude API 사용\n- 개선된 코드 스니펫도 함께 제안\n- 결과를 터미널 출력 + output/review_YYYY-MM-DD_HH-MM.md 로 저장"
+    },
+    {
+      "id": 9,
+      "title": "회의록 액션아이템 추출 에이전트",
+      "status": "todo",
+      "prompt": "회의록 텍스트 파일을 입력하면 액션아이템을 자동 추출해주는 에이전트를 만들어줘.\n- CLI 인자로 텍스트 파일 경로 받기 (python main.py --file meeting.txt)\n- Claude API로 추출: 액션아이템, 담당자, 데드라인, 우선순위\n- 결과를 markdown 테이블 형식으로 출력\n- 담당자별로 그룹핑한 버전도 함께 출력\n- output/actions_YYYY-MM-DD.md + output/actions_YYYY-MM-DD.json 으로 저장"
+    },
+    {
+      "id": 10,
+      "title": "커뮤니티 버즈 수집 에이전트",
+      "status": "todo",
+      "prompt": "특정 키워드에 대한 커뮤니티 반응을 수집하는 에이전트를 만들어줘.\n- 네이버 블로그/카페 검색 API 사용\n- config.yaml에서 모니터링할 키워드 목록 설정\n- 수집 항목: 제목, 본문 요약, 링크, 작성일\n- Claude API로 긍정/부정/중립 감성 분류\n- 키워드별 감성 비율 집계\n- 결과를 output/YYYY-MM-DD.json + output/YYYY-MM-DD.md 로 저장\n- 키워드당 최대 30개 수집"
+    },
+    {
+      "id": 11,
+      "title": "스타트업 펀딩 뉴스 분석 에이전트",
+      "status": "todo",
+      "prompt": "스타트업 투자/펀딩 뉴스를 매일 수집하고 트렌드를 분석해주는 에이전트를 만들어줘.\n- RSS 피드 + 네이버 뉴스 검색 API 활용\n- 검색 키워드: 투자, 펀딩, 시리즈A/B/C\n- 수집 항목: 회사명, 투자금액, 투자사, 업종, 날짜\n- Claude API로 업종별 분류 + 이번 주 투자 트렌드 요약\n- 누적 데이터로 월별 트렌드 비교\n- 결과를 output/YYYY-MM-DD.md + output/funding_db.json 으로 저장"
+    },
+    {
+      "id": 12,
+      "title": "채용공고 기술스택 트렌드 에이전트",
+      "status": "todo",
+      "prompt": "채용공고를 수집해서 기술스택 트렌드를 분석해주는 에이전트를 만들어줘.\n- 원티드 공개 API 또는 스크래핑 활용\n- config.yaml에서 직군 설정 가능 (예: 백엔드, ML엔지니어)\n- 수집 항목: 회사명, 직군, 요구 기술스택, 경력, 지역\n- 기술스택 빈도 집계 + 상위 20개 랭킹\n- 지난 주 대비 상승/하락 기술 표시\n- 결과를 output/YYYY-MM-DD.md + output/YYYY-MM-DD.csv 로 저장"
+    },
+    {
+      "id": 13,
+      "title": "논문 → 블로그 포스트 변환 에이전트",
+      "status": "todo",
+      "prompt": "arXiv 논문 URL을 입력하면 블로그 포스트로 변환해주는 에이전트를 만들어줘.\n- CLI 인자로 arXiv URL 받기 (python main.py --url https://arxiv.org/abs/xxxx)\n- arxiv API로 논문 메타데이터 + 초록 수집\n- Claude API로 변환: 배경 / 핵심 아이디어 / 방법론 / 결과 / 의의 구조\n- 일반인도 이해할 수 있는 수준으로 비유/예시 포함\n- 결과를 output/논문제목_YYYY-MM-DD.md 로 저장"
+    },
+    {
+      "id": 14,
+      "title": "트렌드 → SNS 포스트 생성 에이전트",
+      "status": "todo",
+      "prompt": "토픽을 입력하면 SNS 포스트를 자동 생성해주는 에이전트를 만들어줘.\n- CLI 인자로 토픽 받기 (python main.py --topic '멀티에이전트 시스템')\n- Claude API로 플랫폼별 포스트 생성\n- 트위터: 280자 이내 스레드 형식 (3~5개)\n- 링크드인: 1500자 이내 전문적 톤\n- 각 플랫폼별 3가지 버전 생성 (톤 다르게)\n- 해시태그 자동 추천\n- 결과를 터미널 출력 + output/sns_YYYY-MM-DD.md 로 저장"
+    },
+    {
+      "id": 15,
+      "title": "뉴스레터 자동 생성 에이전트",
+      "status": "todo",
+      "prompt": "수집된 결과물들을 바탕으로 주간 뉴스레터 초안을 자동 생성해주는 에이전트를 만들어줘.\n- output/ 폴더에서 최근 7일치 마크다운 파일들을 자동으로 읽어옴\n- Claude API로 뉴스레터 초안 생성\n- 구성: 이번 주 하이라이트 3개 / 카테고리별 뉴스 / 추천 아티클\n- HTML 버전 + markdown 버전 둘 다 생성\n- 결과를 output/newsletter_YYYY-WW.md + output/newsletter_YYYY-WW.html 로 저장"
+    },
+    {
+      "id": 16,
+      "title": "아이디어 찬반 토론 에이전트",
+      "status": "todo",
+      "prompt": "비즈니스 아이디어를 입력하면 멀티에이전트가 토론하고 결론을 내리는 시스템을 만들어줘.\n- CLI 인자로 아이디어 받기 (python main.py --idea '배달앱 구독 서비스')\n- Claude API로 3개 에이전트 구현: 낙관론자 / 비판론자 / 심판\n- 토론 2라운드 진행\n- 최종 점수 (실현가능성 / 시장성 / 리스크) 출력\n- 결과를 output/debate_YYYY-MM-DD.md 로 저장"
+    },
+    {
+      "id": 17,
+      "title": "비즈니스 아이디어 검증 에이전트",
+      "status": "todo",
+      "prompt": "비즈니스 아이디어를 입력하면 체계적으로 검증해주는 에이전트를 만들어줘.\n- CLI 인자로 아이디어 받기 (python main.py --idea '카페 창업 분석 SaaS')\n- Claude API로 분석: TAM/SAM/SOM / 경쟁사 / 수익모델 3가지 / 핵심 리스크 5가지 / MVP 로드맵\n- 각 항목 10점 만점 점수 + 총점\n- 결과를 output/validation_YYYY-MM-DD.md 로 저장"
+    },
+    {
+      "id": 18,
+      "title": "부동산 상권 데이터 수집 에이전트",
+      "status": "todo",
+      "prompt": "공공데이터포털 API로 상권 분석 데이터를 수집하는 에이전트를 만들어줘.\n- 공공데이터포털 상권정보 API 사용\n- config.yaml에서 지역(시/구), 업종 설정 가능\n- 수집 항목: 상권명, 업종별 점포수, 개업률, 폐업률, 유동인구\n- 지역별 비교 분석\n- Claude API로 수집된 데이터 인사이트 요약\n- 결과를 output/YYYY-MM-DD.csv + output/YYYY-MM-DD_summary.md 로 저장"
+    },
+    {
+      "id": 19,
+      "title": "개인 학습 요약 에이전트",
+      "status": "todo",
+      "prompt": "텍스트 파일이나 URL을 입력하면 학습 자료로 정리해주는 에이전트를 만들어줘.\n- CLI 인자로 텍스트 파일 또는 URL 받기\n- URL이면 웹페이지 텍스트 추출 (requests + BeautifulSoup)\n- Claude API로 정리: 핵심 개념 5가지 / 플래시카드 10장(Q&A) / 한 줄 요약 / 더 공부할 키워드 5개\n- 결과를 output/study_YYYY-MM-DD.md 로 저장"
+    },
+    {
+      "id": 20,
+      "title": "전체 결과물 대시보드 에이전트",
+      "status": "todo",
+      "prompt": "completed 폴더의 모든 에이전트 결과물을 읽어서 HTML 대시보드를 만들어주는 에이전트를 만들어줘.\n- completed/ 폴더 자동 스캔\n- 각 에이전트의 README.md 읽어서 정보 추출\n- output/ 폴더에서 마지막 실행 결과 파일 날짜 확인\n- HTML 대시보드: 에이전트 목록 + 설명 + 상태 + 마지막 실행 시간 + 결과물 미리보기\n- 결과를 output/dashboard.html 로 저장\n- python main.py 실행하면 브라우저 자동으로 열기"
+    }
+  ]
+}
