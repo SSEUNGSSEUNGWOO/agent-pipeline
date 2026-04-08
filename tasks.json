@@ -7,21 +7,23 @@
     {
       "id": 1,
       "title": "arXiv 논문 요약 에이전트",
-      "status": "in_progress",
+      "status": "done",
       "prompt": "arXiv에서 AI/ML 관련 논문을 매일 자동 수집하고 한국어로 요약해주는 에이전트를 만들어줘.\n- config.yaml에서 키워드 목록 설정 가능 (예: LLM, multi-agent, RAG)\n- arxiv 공식 API (feedparser) 사용\n- 논문별로 제목, 저자, 초록 요약(3줄), 링크 수집\n- 요약은 Claude API 사용 (anthropic 라이브러리)\n- 결과를 output/YYYY-MM-DD.md 로 저장\n- 하루 최대 수집 논문 수 config로 설정 가능 (기본값 10개)",
-      "updated_at": "2026-03-30T17:43:48.983996"
+      "updated_at": "2026-03-30T19:50:04.447616"
     },
     {
       "id": 2,
       "title": "GitHub 트렌딩 분석 에이전트",
-      "status": "todo",
-      "prompt": "GitHub 트렌딩 레포지토리를 매일 수집하고 기술 트렌드를 분석해주는 에이전트를 만들어줘.\n- GitHub 트렌딩 페이지 스크래핑 (requests + BeautifulSoup)\n- config.yaml에서 언어 필터 설정 가능 (예: Python, TypeScript)\n- 수집 항목: 레포 이름, 설명, 스타수, 오늘 스타증가수, 언어\n- 주간 트렌드 비교 (이번주 vs 지난주)\n- 결과를 output/YYYY-MM-DD.md 로 저장\n- 상위 20개 레포 수집"
+      "status": "done",
+      "prompt": "GitHub 트렌딩 레포지토리를 매일 수집하고 기술 트렌드를 분석해주는 에이전트를 만들어줘.\n- GitHub 트렌딩 페이지 스크래핑 (requests + BeautifulSoup)\n- config.yaml에서 언어 필터 설정 가능 (예: Python, TypeScript)\n- 수집 항목: 레포 이름, 설명, 스타수, 오늘 스타증가수, 언어\n- 주간 트렌드 비교 (이번주 vs 지난주)\n- 결과를 output/YYYY-MM-DD.md 로 저장\n- 상위 20개 레포 수집",
+      "updated_at": "2026-03-30T19:50:04.453436"
     },
     {
       "id": 3,
       "title": "AI 뉴스 수집 + 인사이트 에이전트",
-      "status": "todo",
-      "prompt": "AI 관련 뉴스를 매일 수집하고 핵심 인사이트를 추출해주는 에이전트를 만들어줘.\n- RSS 피드 기반 수집 (feedparser)\n- config.yaml에서 RSS URL 목록 설정 가능\n- 기본 포함 피드: TechCrunch AI, MIT Technology Review, The Verge AI\n- 수집 항목: 제목, 요약, 링크, 발행시간\n- Claude API로 오늘의 핵심 인사이트 3가지 추출\n- 카테고리 자동 분류 (모델 출시 / 투자 / 정책 / 연구)\n- 결과를 output/YYYY-MM-DD.md 로 저장"
+      "status": "in_progress",
+      "prompt": "AI 관련 뉴스를 매일 수집하고 핵심 인사이트를 추출해주는 에이전트를 만들어줘.\n- RSS 피드 기반 수집 (feedparser)\n- config.yaml에서 RSS URL 목록 설정 가능\n- 기본 포함 피드: TechCrunch AI, MIT Technology Review, The Verge AI\n- 수집 항목: 제목, 요약, 링크, 발행시간\n- Claude API로 오늘의 핵심 인사이트 3가지 추출\n- 카테고리 자동 분류 (모델 출시 / 투자 / 정책 / 연구)\n- 결과를 output/YYYY-MM-DD.md 로 저장",
+      "updated_at": "2026-04-03T12:42:52.369189"
     },
     {
       "id": 4,
