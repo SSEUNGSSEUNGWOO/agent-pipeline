@@ -1,0 +1,37 @@
+# Fixed: arxiv.api_url, arxiv.paper_url_pattern, paths.log_retention 필드 추가 (하드코딩된 URL·retention 값을 config로 이동)
+search:
+  keywords:
+    - LLM
+    - multi-agent
+    - chain of thought
+    - RAG
+    - reasoning
+    - transformer
+  search_fields: [ti, abs]
+  max_results: 10
+  sort_by: submittedDate
+  sort_order: descending
+  timeout_seconds: 30
+  date_offset_days: -1
+
+arxiv:
+  api_url: https://export.arxiv.org/api/query
+  paper_url_pattern: 'https://arxiv.org/abs/{arxiv_id}'
+
+claude:
+  model: claude-sonnet-4-6
+  max_tokens: 512
+  temperature: 0.3
+  call_interval_seconds: 2.0
+  abstract_truncate_chars: 1000
+
+retry:
+  attempts: 3
+  wait_seconds: 5
+  rate_limit_backoff_min: 10
+  rate_limit_backoff_max: 120
+
+paths:
+  output_dir: output
+  log_dir: logs
+  log_retention: '30 days'
