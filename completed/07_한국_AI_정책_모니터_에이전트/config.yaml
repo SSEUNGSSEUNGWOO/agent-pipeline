@@ -1,0 +1,83 @@
+agent:
+  name: "한국 AI 정책 모니터"
+  max_articles_per_run: 50
+  max_articles_per_source: 20
+  request_delay_seconds: 1.0
+  region_tie_break: "국내"
+
+http:
+  timeout_seconds: 15
+  retry_count: 3
+  retry_delay_seconds: 2.0
+  user_agent: "Mozilla/5.0 (compatible; AI-Policy-Monitor/1.0)"
+  bs_parser: "lxml"
+
+claude:
+  model: "claude-opus-4-6"
+  max_tokens: 512
+  temperature: 0.3
+  retry_count: 3
+  retry_delay_seconds: 5.0
+  call_delay_seconds: 1.0
+  raw_text_max_chars: 1000
+
+state:
+  path: "state.json"
+  max_hashes_per_source: 500
+
+output:
+  dir: "output"
+  log_dir: "logs"
+
+logging:
+  level: "INFO"
+
+sources:
+  - id: "msit"
+    name: "과학기술정보통신부 보도자료"
+    type: "html"
+    url: "https://www.msit.go.kr/bbs/list.do?sCode=user&mId=129&mPid=112"
+    link_base: "https://www.msit.go.kr"
+    selectors:
+      list: "table.type_list tbody tr"
+      title: "td.tit a"
+      link: "td.tit a"
+      date: "td.date"
+    filter_keywords: ["AI", "인공지능", "데이터", "디지털"]
+
+  - id: "nipa"
+    name: "NIPA 뉴스"
+    type: "rss"
+    enabled: false
+    url: "https://www.nipa.kr/rss/rssMain.do"
+    filter_keywords: ["AI", "인공지능", "데이터", "디지털", "정책"]
+
+  - id: "pipc"
+    name: "개인정보보호위원회 보도자료"
+    type: "html"
+    url: "https://www.pipc.go.kr/np/cop/bbs/selectBoardList.do?bbsId=BS074"
+    link_base: "https://www.pipc.go.kr"
+    selectors:
+      list: "table tbody tr"
+      title: "td.subject a"
+      link: "td.subject a"
+      date: "td.date"
+    filter_keywords: ["AI", "인공지능", "데이터"]
+
+  - id: "aitimes"
+    name: "AI타임스"
+    type: "rss"
+    url: "https://www.aitimes.com/rss/allArticle.xml"
+    filter_keywords: ["정책", "규제", "법", "가이드라인", "위원회"]
+
+  - id: "fli"
+    name: "Future of Life Institute"
+    type: "rss"
+    url: "https://futureoflife.org/feed/"
+    filter_keywords: ["policy", "regulation", "governance", "ai act"]
+
+  - id: "stanford_hai"
+    name: "Stanford HAI"
+    type: "rss"
+    url: "https://hai.stanford.edu/news/rss.xml"
+    filter_keywords: ["policy", "regulation", "governance"]

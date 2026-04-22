@@ -1,0 +1,13 @@
+.env
+state.json
+.agent.lock
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+logs/
+output/
+*.bak.md
+*.md.tmp
+*.json.tmp

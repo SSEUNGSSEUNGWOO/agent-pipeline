@@ -1,0 +1,102 @@
+# Fixed: 모든 함수에 한국어 docstring 추가
+import logging
+import os
+import shutil
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+from agent.summarizer import SummarizedArticle
+
+
+def render_header(date_str: str, source_count: int, article_count: int) -> str:
+    """보고서 상단 헤더 마크다운 문자열을 생성한다."""
+    KST = timezone(timedelta(hours=9))
+    generated_at = datetime.now(tz=KST).strftime("%Y-%m-%d %H:%M:%S KST")
+    return (
+        f"# AI 정책 모니터 — {date_str}\n\n"
+        f"> 수집 출처 {source_count}개 | 신규 글 {article_count}건 | "
+        f"생성 시각: {generated_at}\n\n---"
+    )
+
+
+def group_by_region(articles: list[SummarizedArticle]) -> dict[str, list]:
+    """기사를 국내·글로벌·미분류로 분류한 딕셔너리를 반환한다."""
+    result = {"국내": [], "글로벌": [], "미분류": []}
+    for article in articles:
+        if "국내" in article.tags:
+            result["국내"].append(article)
+        elif "글로벌" in article.tags:
+            result["글로벌"].append(article)
+        else:
+            result["미분류"].append(article)
+    return result
+
+
+def render_article_block(article: SummarizedArticle, number: int) -> str:
+    """단일 기사의 마크다운 블록 문자열을 생성한다."""
+    tag_str = " ".join(f"`{t}`" for t in article.tags)
+    lines = article.summary.split("\n")
+    quoted_lines = "\n".join(f"> {i+1}. {line}" for i, line in enumerate(lines) if line.strip())
+    pub_date = article.published[:10]
+
+    return (
+        f"### {number}. [{article.source_name}] {article.title}\n\n"
+        f"- **링크**: {article.url}\n"
+        f"- **발행일**: {pub_date}\n"
+        f"- **태그**: {tag_str}\n\n"
+        f"{quoted_lines}\n"
+    )
+
+
+def generate_report(
+    articles: list[SummarizedArticle],
+    output_dir: Path,
+    date_str: str,
+    config: dict,
+    logger: logging.Logger,
+) -> Path:
+    """요약된 기사 목록으로 마크다운 보고서를 생성하고 파일로 저장한다."""
+    grouped = group_by_region(articles)
+    source_count = len({a.source_id for a in articles})
+    article_count = len(articles)
+    model_name = config["claude"]["model"]
+
+    parts = []
+    counter = 1
+    for region in ["국내", "글로벌", "미분류"]:
+        region_articles = sorted(grouped[region], key=lambda a: a.published, reverse=True)
+
+        if region in ("국내", "글로벌") and not region_articles:
+            continue
+
+        parts.append(f"## {region}\n\n")
+
+        if not region_articles:
+            parts.append("*(지역 태그 미확인 글 없음)*\n\n")
+            parts.append("---\n\n")
+        else:
+            for article in region_articles:
+                parts.append(render_article_block(article, counter))
+                parts.append("\n---\n\n")
+                counter += 1
+
+    content = render_header(date_str, source_count, article_count)
+    content += "\n\n"
+    content += "".join(parts)
+    content += f"*AI 정책 모니터 에이전트 자동 생성 | {model_name}*\n"
+
+    final_path = output_dir / f"{date_str}.md"
+    bak_path   = output_dir / f"{date_str}.bak.md"
+    tmp_path   = output_dir / f"{date_str}.md.tmp"
+
+    if final_path.exists():
+        shutil.copy2(final_path, bak_path)
+
+    if tmp_path.exists():
+        tmp_path.unlink()
+
+    tmp_path.write_text(content, encoding="utf-8")
+    os.replace(tmp_path, final_path)
+
+    logger.info(f"보고서 생성 완료: {final_path}")
+    return final_path
