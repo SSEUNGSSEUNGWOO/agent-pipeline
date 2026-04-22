@@ -1,13 +1,9 @@
 .env
 state.json
+state.json.tmp
 .agent.lock
+output/
+logs/
 __pycache__/
 *.pyc
-*.pyo
-.venv/
-venv/
-logs/
-output/
-*.bak.md
-*.md.tmp
-*.json.tmp
+.DS_Store

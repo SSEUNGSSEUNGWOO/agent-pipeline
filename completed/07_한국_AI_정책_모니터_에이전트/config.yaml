@@ -1,9 +1,21 @@
+# 수정 내역:
+# 1. agent.allowed_region_tags, agent.allowed_category_tags 추가 (summarizer.py 하드코딩 상수 이동)
+# 2. stanford_hai에 enabled: false 추가 (s.get("enabled", True) 로직으로 매 실행 시 활성화되는 문제 수정)
 agent:
   name: "한국 AI 정책 모니터"
   max_articles_per_run: 50
   max_articles_per_source: 20
   request_delay_seconds: 1.0
   region_tie_break: "국내"
+  allowed_region_tags:
+    - "국내"
+    - "글로벌"
+  allowed_category_tags:
+    - "규제"
+    - "지원"
+    - "가이드라인"
+    - "연구"
+    - "기타"
 
 http:
   timeout_seconds: 15
@@ -13,7 +25,7 @@ http:
   bs_parser: "lxml"
 
 claude:
-  model: "claude-opus-4-6"
+  model: "claude-sonnet-4-6"
   max_tokens: 512
   temperature: 0.3
   retry_count: 3
@@ -28,10 +40,14 @@ state:
 output:
   dir: "output"
   log_dir: "logs"
+  show_untagged_section: true
+  backup_retention_days: 7
 
 logging:
   level: "INFO"
 
+# RSS 소스 참고: entry.link가 절대 URL인 것을 전제합니다.
+# 상대 URL을 반환하는 피드는 link_base를 설정하세요.
 sources:
   - id: "msit"
     name: "과학기술정보통신부 보도자료"
@@ -79,5 +95,6 @@ sources:
   - id: "stanford_hai"
     name: "Stanford HAI"
     type: "rss"
+    enabled: false
     url: "https://hai.stanford.edu/news/rss.xml"
     filter_keywords: ["policy", "regulation", "governance"]

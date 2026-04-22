@@ -1,6 +1,9 @@
-# lxml 설치 실패 시 아래 install.sh 사용, 또는 config.yaml의 http.bs_parser를 "html.parser"로 변경하고 lxml 줄 삭제
+# 수정 내역: requests 2.32.3→2.32.5 버전 업, urllib3 핀닝 추가(RequestsDependencyWarning 방지)
+# lxml 설치 실패 시 bash install.sh 사용, 또는 config.yaml의 http.bs_parser를 "html.parser"로 변경하고 lxml 줄 삭제
 feedparser==6.0.11
-requests==2.32.3
+requests==2.32.5
+urllib3==2.6.3
+charset-normalizer==3.3.2
 beautifulsoup4==4.12.3
 lxml==5.2.2
 anthropic>=0.50.0

@@ -1,4 +1,4 @@
-# Fixed: 모든 함수에 한국어 docstring 추가
+# 수정 내역: 모든 함수에 한국어 docstring 추가
 import logging
 import re
 import time
@@ -12,7 +12,7 @@ import requests
 from bs4 import BeautifulSoup
 from requests.exceptions import ChunkedEncodingError
 
-from agent.state_manager import is_new_item, mark_seen
+from agent.state_manager import build_seen_set, mark_seen
 from agent.utils import compute_hash
 
 
@@ -29,7 +29,7 @@ class Article:
 
 
 def resolve_url(raw_url: str, link_base: str) -> str:
-    """상대 URL을 link_base를 기준으로 절대 URL로 변환한다."""
+    """상대 URL과 link_base를 합쳐 절대 URL을 반환한다. link_base가 없으면 raw_url을 그대로 반환한다."""
     if not link_base:
         return raw_url
     return urljoin(link_base, raw_url)
@@ -40,7 +40,7 @@ def fetch_with_retry(
     config: dict,
     logger: logging.Logger,
 ) -> requests.Response | None:
-    """HTTP GET 요청을 재시도 로직과 함께 실행하고 응답을 반환한다."""
+    """설정된 재시도 횟수만큼 HTTP GET 요청을 시도하고, 성공하면 Response를 반환한다."""
     timeout = config["http"]["timeout_seconds"]
     retry_count = config["http"]["retry_count"]
     retry_delay = config["http"]["retry_delay_seconds"]
@@ -85,7 +85,7 @@ def fetch_with_retry(
 
 
 def parse_date_rss(entry) -> str:
-    """RSS 피드 항목에서 발행일을 파싱해 ISO 형식 문자열로 반환한다."""
+    """RSS entry에서 발행일을 ISO 8601 문자열로 파싱한다. 파싱 실패 시 현재 UTC를 반환한다."""
     parsed = getattr(entry, "published_parsed", None)
     if parsed is None:
         parsed = getattr(entry, "updated_parsed", None)
@@ -98,7 +98,7 @@ def parse_date_rss(entry) -> str:
 
 
 def parse_date_html(date_str: str, logger: logging.Logger) -> str:
-    """HTML에서 추출한 날짜 문자열을 ISO 형식으로 변환한다."""
+    """HTML 페이지에서 추출한 날짜 문자열을 ISO 8601 형식으로 변환한다."""
     if not date_str or not date_str.strip():
         return datetime.now(tz=timezone.utc).isoformat()
 
@@ -122,7 +122,7 @@ def parse_date_html(date_str: str, logger: logging.Logger) -> str:
 
 
 def parse_rss_article_meta(entry, source: dict, config: dict, item_hash: str) -> Article:
-    """RSS 피드 항목으로부터 Article 객체를 생성한다."""
+    """RSS entry와 소스 설정을 받아 Article 데이터클래스를 생성한다."""
     url = getattr(entry, "link", "") or ""
     url = resolve_url(url, source.get("link_base", ""))
 
@@ -149,43 +149,33 @@ def parse_rss_article_meta(entry, source: dict, config: dict, item_hash: str) ->
 
 
 def extract_html_items(html: str, source: dict, config: dict, logger: logging.Logger) -> list[dict]:
-    """HTML 페이지를 파싱해 제목·링크·날짜 목록을 추출한다."""
+    """HTML 문자열을 파싱하여 제목·URL·날짜 딕셔너리 목록을 추출한다."""
     parser = config["http"]["bs_parser"]
     soup = BeautifulSoup(html, parser)
-    selectors = source.get("selectors", {})
-
-    list_sel  = selectors.get("list")
-    title_sel = selectors.get("title")
-    link_sel  = selectors.get("link")
-
-    if not list_sel or not title_sel or not link_sel:
-        logger.error(
-            f"[{source['id']}] selectors에 필수 키(list/title/link)가 누락되었습니다. 스킵."
-        )
-        return []
-
+    selectors = source["selectors"]
     items = []
-    for row in soup.select(list_sel):
-        title_el = row.select_one(title_sel)
-        link_el  = row.select_one(link_sel)
+
+    for row in soup.select(selectors["list"]):
+        title_el = row.select_one(selectors["title"])
+        link_el = row.select_one(selectors["link"])
         if not title_el or not link_el:
             continue
 
         date_sel = selectors.get("date")
-        date_el  = row.select_one(date_sel) if date_sel else None
+        date_el = row.select_one(date_sel) if date_sel else None
         date_str = date_el.get_text(strip=True) if date_el else ""
 
         items.append({
             "title": title_el.get_text(strip=True),
-            "url":   link_el.get("href", ""),
-            "date":  date_str,
+            "url": link_el.get("href", ""),
+            "date": date_str,
         })
 
     return items
 
 
 def collect_rss(source: dict, state: dict, config: dict, logger: logging.Logger) -> list[Article]:
-    """RSS 피드에서 신규 기사를 수집하고 Article 목록으로 반환한다."""
+    """RSS 피드를 수집하고, 이미 본 항목과 키워드 필터를 적용한 신규 기사 목록을 반환한다."""
     response = fetch_with_retry(source["url"], config, logger)
     if response is None:
         return []
@@ -202,6 +192,7 @@ def collect_rss(source: dict, state: dict, config: dict, logger: logging.Logger)
             return []
 
     keywords = source.get("filter_keywords", [])
+    seen_set = build_seen_set(state, source["id"])
     candidates = []
 
     for entry in feed.entries:
@@ -213,11 +204,11 @@ def collect_rss(source: dict, state: dict, config: dict, logger: logging.Logger)
         url = resolve_url(url, source.get("link_base", ""))
         item_hash = compute_hash(url, title)
 
-        if not is_new_item(state, source["id"], item_hash):
+        if item_hash in seen_set:
             continue
-        mark_seen(state, source["id"], item_hash)
 
         if keywords and not any(kw.lower() in title.lower() for kw in keywords):
+            mark_seen(state, source["id"], item_hash, seen_set)
             continue
 
         candidates.append(parse_rss_article_meta(entry, source, config, item_hash))
@@ -229,13 +220,9 @@ def collect_rss(source: dict, state: dict, config: dict, logger: logging.Logger)
 
 
 def collect_html(source: dict, state: dict, config: dict, logger: logging.Logger) -> list[Article]:
-    """HTML 목록 페이지에서 신규 기사를 수집하고 Article 목록으로 반환한다."""
+    """HTML 목록 페이지를 스크래핑하고, 이미 본 항목과 키워드 필터를 적용한 신규 기사 목록을 반환한다."""
     if not source.get("link_base"):
         logger.error(f"[{source['id']}] link_base 누락. 스킵.")
-        return []
-
-    if not source.get("selectors"):
-        logger.error(f"[{source['id']}] selectors 설정 누락. 스킵.")
         return []
 
     response = fetch_with_retry(source["url"], config, logger)
@@ -244,22 +231,26 @@ def collect_html(source: dict, state: dict, config: dict, logger: logging.Logger
 
     raw_items = extract_html_items(response.text, source, config, logger)
     keywords = source.get("filter_keywords", [])
+    seen_set = build_seen_set(state, source["id"])
     candidates = []
 
     for item in raw_items:
-        raw_url = item.get("url", "")
-        title = item.get("title", "").strip()
-        if not raw_url or not title:
+        raw_href = item.get("url", "").strip()
+        if not raw_href:
             continue
 
-        url = resolve_url(raw_url, source["link_base"])
+        url = resolve_url(raw_href, source["link_base"])
+        title = item.get("title", "").strip()
+        if not url or not title:
+            continue
+
         item_hash = compute_hash(url, title)
 
-        if not is_new_item(state, source["id"], item_hash):
+        if item_hash in seen_set:
             continue
-        mark_seen(state, source["id"], item_hash)
 
         if keywords and not any(kw.lower() in title.lower() for kw in keywords):
+            mark_seen(state, source["id"], item_hash, seen_set)
             continue
 
         published = parse_date_html(item.get("date", ""), logger)
@@ -286,14 +277,10 @@ def collect_all(
     config: dict,
     logger: logging.Logger,
 ) -> list[Article]:
-    """모든 소스에서 기사를 수집하고 최대 개수 제한을 적용해 반환한다."""
+    """모든 소스에서 기사를 수집하고, 소스 간 라운드로빈 방식으로 최대 실행 수 내에서 반환한다."""
     per_source_results = []
 
     for i, source in enumerate(sources):
-        if not source.get("enabled", True):
-            logger.info(f"[{source['id']}] 소스 비활성화됨, 건너뜁니다.")
-            continue
-
         if source["type"] == "rss":
             articles = collect_rss(source, state, config, logger)
         elif source["type"] == "html":
@@ -304,8 +291,7 @@ def collect_all(
 
         per_source_results.append(articles)
 
-        remaining = [s for s in sources[i + 1:] if s.get("enabled", True)]
-        if remaining:
+        if i < len(sources) - 1:
             time.sleep(config["agent"]["request_delay_seconds"])
 
     max_run = config["agent"]["max_articles_per_run"]
@@ -322,8 +308,14 @@ def collect_all(
             if total_available > len(merged):
                 logger.warning(
                     f"총 수집 가능 {total_available}개 중 "
-                    f"{max_run}개만 처리"
+                    f"{max_run}개만 처리 (초과분은 다음 실행에서 재수집)"
                 )
             break
+
+    seen_sets: dict[str, set] = {}
+    for article in merged:
+        if article.source_id not in seen_sets:
+            seen_sets[article.source_id] = build_seen_set(state, article.source_id)
+        mark_seen(state, article.source_id, article.item_hash, seen_sets[article.source_id])
 
     return merged

@@ -1,7 +1,9 @@
-# Fixed: 모든 함수에 한국어 docstring 추가
+# 수정 내역:
+# 1. ALLOWED_REGION_TAGS, ALLOWED_CATEGORY_TAGS 모듈 상수 제거 → config.yaml에서 로드 (하드코딩 제거)
+# 2. _extract_from_parsed에 config 파라미터 추가하여 config에서 허용 태그 집합 동적 생성
+# 3. 모든 함수에 한국어 docstring 추가
 import json
 import logging
-import os
 import re
 import time
 from dataclasses import dataclass
@@ -23,13 +25,8 @@ class SummarizedArticle:
     item_hash: str
 
 
-ALLOWED_REGION_TAGS     = {"국내", "글로벌"}
-ALLOWED_CATEGORY_TAGS   = {"규제", "지원", "가이드라인", "연구", "기타"}
-ALLOWED_TAGS            = ALLOWED_REGION_TAGS | ALLOWED_CATEGORY_TAGS
-
-
-def build_prompt(article: "Article", config: dict) -> str:
-    """기사 정보를 바탕으로 Claude에 전달할 요약 요청 프롬프트 문자열을 생성한다."""
+def build_prompt(article: Article, config: dict) -> str:
+    """Claude에 전달할 요약 요청 프롬프트를 생성한다."""
     raw_text = article.raw_text
 
     source_note = ""
@@ -69,7 +66,7 @@ def call_claude_with_retry(
     config: dict,
     logger: logging.Logger,
 ) -> str | None:
-    """Claude API를 재시도 로직과 함께 호출하고 응답 텍스트를 반환한다."""
+    """Claude API를 호출하고 실패 시 설정된 횟수만큼 재시도한다."""
     retry_count = config["claude"]["retry_count"]
     retry_delay = config["claude"]["retry_delay_seconds"]
 
@@ -81,9 +78,6 @@ def call_claude_with_retry(
                 temperature=config["claude"]["temperature"],
                 messages=[{"role": "user", "content": prompt}],
             )
-            if not message.content:
-                logger.warning("Claude 응답에 content가 없습니다. 스킵.")
-                return None
             return message.content[0].text
 
         except anthropic.AuthenticationError:
@@ -123,35 +117,43 @@ def call_claude_with_retry(
             else:
                 logger.error(f"API 재시도 초과: {e}")
                 return None
-        except anthropic.APIStatusError as e:
-            logger.warning(f"처리되지 않은 API 오류 ({e.status_code}): {e}. 스킵.")
-            return None
 
     return None
 
 
-def _extract_from_parsed(data: dict, region_tie_break: str = "국내") -> tuple[str, list[str]]:
-    """파싱된 JSON 딕셔너리에서 요약 문자열과 유효 태그 목록을 추출한다."""
+def _extract_from_parsed(data: dict, region_tie_break: str, config: dict, logger: logging.Logger) -> tuple[str, list[str]]:
+    """파싱된 JSON 딕셔너리에서 요약 문장과 유효 태그 목록을 추출한다."""
+    allowed_region_tags = set(config["agent"]["allowed_region_tags"])
+    allowed_category_tags = set(config["agent"]["allowed_category_tags"])
+    allowed_tags = allowed_region_tags | allowed_category_tags
+
     summary_raw = data["summary"]
 
-    if isinstance(summary_raw, str):
-        summary = summary_raw.strip()
-    elif isinstance(summary_raw, list):
-        summary = "\n".join(str(s) for s in summary_raw if str(s).strip())
+    if isinstance(summary_raw, list):
+        lines = [str(s).strip() for s in summary_raw if str(s).strip()]
+    elif isinstance(summary_raw, str):
+        lines = [s.strip() for s in summary_raw.split("\n") if s.strip()]
     else:
-        summary = ""
+        lines = []
 
-    if not summary:
-        summary = "요약 내용 없음"
+    if len(lines) != 3:
+        logger.warning(f"summary 문장 수 {len(lines)}개 (기대값: 3). 조정합니다.")
+        if len(lines) > 3:
+            lines = lines[:3]
+        else:
+            while len(lines) < 3:
+                lines.append("(내용 없음)")
+
+    summary = "\n".join(lines)
 
     tags_raw = data.get("tags", [])
-    valid_tags = [t for t in tags_raw if t in ALLOWED_TAGS]
+    valid_tags = [t for t in tags_raw if t in allowed_tags]
 
-    region_tags = [t for t in valid_tags if t in ALLOWED_REGION_TAGS]
+    region_tags = [t for t in valid_tags if t in allowed_region_tags]
     if len(region_tags) > 1:
         winner = region_tie_break if region_tie_break in region_tags else region_tags[0]
         region_tags = [winner]
-    category_tags = [t for t in valid_tags if t in ALLOWED_CATEGORY_TAGS]
+    category_tags = [t for t in valid_tags if t in allowed_category_tags]
     final_tags = region_tags + category_tags
 
     if not final_tags:
@@ -165,34 +167,39 @@ def parse_claude_response(
     config: dict,
     logger: logging.Logger,
 ) -> tuple[str, list[str]]:
-    """Claude 응답 텍스트에서 요약과 태그를 파싱해 튜플로 반환한다."""
+    """Claude 응답 텍스트를 파싱하여 요약과 태그를 반환한다. JSON 추출 실패 시 폴백 값을 반환한다."""
     tie_break = config["agent"]["region_tie_break"]
 
     try:
         data = json.loads(response_text.strip())
-        return _extract_from_parsed(data, tie_break)
+        return _extract_from_parsed(data, tie_break, config, logger)
     except (json.JSONDecodeError, KeyError, TypeError):
         pass
 
-    pattern = re.compile(r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)?\}', re.DOTALL)
-    for match in pattern.finditer(response_text):
+    first_brace = response_text.find("{")
+    last_brace = response_text.rfind("}")
+    if first_brace != -1 and last_brace > first_brace:
+        candidate = response_text[first_brace:last_brace + 1]
         try:
-            data = json.loads(match.group())
-            return _extract_from_parsed(data, tie_break)
+            data = json.loads(candidate)
+            return _extract_from_parsed(data, tie_break, config, logger)
         except (json.JSONDecodeError, KeyError, TypeError):
-            continue
+            pass
 
     logger.warning(f"Claude 응답 파싱 최종 실패: {response_text[:100]}")
-    return ("파싱 오류", ["기타"])
+    return ("파싱 오류\n(내용 없음)\n(내용 없음)", ["기타"])
+
+
+_FALLBACK_SUMMARY = "요약 생성 실패\n(내용 없음)\n(내용 없음)"
 
 
 def summarize_article(
-    article: "Article",
+    article: Article,
     client: anthropic.Anthropic,
     config: dict,
     logger: logging.Logger,
 ) -> SummarizedArticle:
-    """단일 기사를 Claude API로 요약해 SummarizedArticle 객체로 반환한다."""
+    """단일 기사를 Claude API로 요약하고 SummarizedArticle을 반환한다."""
     prompt = build_prompt(article, config)
     response_text = call_claude_with_retry(client, prompt, config, logger)
 
@@ -203,7 +210,7 @@ def summarize_article(
             title=article.title,
             url=article.url,
             published=article.published,
-            summary="요약 생성 실패",
+            summary=_FALLBACK_SUMMARY,
             tags=["기타"],
             item_hash=article.item_hash,
         )
@@ -222,12 +229,12 @@ def summarize_article(
 
 
 def summarize_all(
-    articles: list["Article"],
+    articles: list[Article],
     config: dict,
     logger: logging.Logger,
 ) -> list[SummarizedArticle]:
-    """기사 목록 전체를 순서대로 요약하고 SummarizedArticle 목록을 반환한다."""
-    client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+    """기사 목록 전체를 순차적으로 요약하고 결과 리스트를 반환한다."""
+    client = anthropic.Anthropic(api_key=config["_api_key"])
     results = []
     for i, article in enumerate(articles):
         result = summarize_article(article, client, config, logger)
