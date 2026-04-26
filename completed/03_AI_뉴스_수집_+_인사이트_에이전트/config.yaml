@@ -1,0 +1,64 @@
+agent:
+  name: "AI 뉴스 인사이트 에이전트"
+  lookback_days: 1
+  max_articles_per_feed: 20
+  max_total_articles: 50
+
+feeds:
+  timeout: 10
+  user_agent: "Mozilla/5.0 (compatible; AINewsAgent/1.0)"
+  sources:
+    - name: "TechCrunch AI"
+      url: "https://techcrunch.com/category/artificial-intelligence/feed/"
+      enabled: true
+    - name: "MIT Technology Review"
+      url: "https://www.technologyreview.com/feed/"
+      enabled: true
+    - name: "The Verge AI"
+      url: "https://www.theverge.com/ai-artificial-intelligence/rss/index.xml"
+      enabled: true
+
+claude:
+  model: "claude-sonnet-4-6"
+  max_tokens: 1500
+  temperature: 0.3
+  insight_count: 3
+  prompt_summary_max_chars: 300
+  prompt_template: |
+    다음 AI 뉴스 기사들을 분석해 핵심 인사이트 {insight_count}개를 추출하세요.
+    반드시 아래 JSON 형식으로만 응답하세요. 다른 텍스트는 포함하지 마세요.
+    아래는 응답 형식 예시입니다. 이 예시를 그대로 반환하지 말고, 실제 기사를 분석한 인사이트를 작성하세요.
+    {example_json}
+
+    {articles_text}
+
+retry:
+  attempts: 3
+  wait_min: 2
+  wait_max: 10
+  rate_limit_wait: 60
+
+categories:
+  default_name: "기타"
+  items:
+    - name: "모델 출시"
+      keywords: ["release", "launch", "model", "gpt", "gemini", "claude", "llm", "출시"]
+    - name: "투자"
+      keywords: ["funding", "investment", "raise", "billion", "million", "valuation", "투자"]
+    - name: "정책"
+      keywords: ["regulation", "policy", "law", "ban", "government", "eu", "규제", "정책"]
+    - name: "연구"
+      keywords: ["research", "paper", "study", "benchmark", "arxiv", "연구", "논문"]
+
+output:
+  dir: "output"
+  encoding: "utf-8"
+
+logging:
+  dir: "logs"
+  level: "INFO"
+  retention_days: 30
+
+state:
+  path: "state.json"
+  retention_days: 90

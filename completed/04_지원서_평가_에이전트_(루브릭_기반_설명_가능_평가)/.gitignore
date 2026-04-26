@@ -1,0 +1,8 @@
+.env
+__pycache__/
+*.pyc
+output/
+logs/
+calibration_profile.json
+.venv/
+venv/

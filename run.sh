@@ -1,6 +1,14 @@
 #!/bin/bash
 cd "$(dirname "$0")"
 
+LOCK_FILE="/tmp/agents_orchestrator.lock"
+
+if [ -f "$LOCK_FILE" ] && kill -0 "$(cat $LOCK_FILE)" 2>/dev/null; then
+    exit 0
+fi
+echo $$ > "$LOCK_FILE"
+trap "rm -f $LOCK_FILE" EXIT
+
 while true; do
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] orchestrator 시작"
     python orchestrator.py

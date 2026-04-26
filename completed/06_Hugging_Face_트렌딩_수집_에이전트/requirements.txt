@@ -1,0 +1,4 @@
+# Fixed: requirements.txt 미작성 (항목 13)
+requests>=2.31.0
+pyyaml>=6.0
+python-dotenv>=1.0.0

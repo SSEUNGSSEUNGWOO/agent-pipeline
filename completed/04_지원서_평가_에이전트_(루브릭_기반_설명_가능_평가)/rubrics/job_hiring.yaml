@@ -1,0 +1,58 @@
+name: "일반 채용 평가"
+description: "일반 채용 지원서(자기소개서) 평가 루브릭"
+total_score: 100
+
+sections:
+  - name: "직무 적합성"
+    scoring_type: "standard"
+    items:
+      - name: "직무 이해도"
+        max_score: 25
+        scoring_anchors:
+          "21-25": "직무 핵심 역할 정확히 파악 + 자신의 역량과 구체적 연결"
+          "16-20": "직무 이해는 있으나 역량 연결이 다소 추상적"
+          "11-15": "일반적 직무 설명 수준"
+          "6-10": "직무 이해 부족"
+          "1-5": "직무와 무관한 내용"
+        academic_basis: "Holland (1997) - 직업 적합성 이론 (RIASEC)"
+
+      - name: "관련 경험"
+        max_score: 25
+        scoring_anchors:
+          "21-25": "3건 이상 직접 관련 경험, STAR 기법으로 서술"
+          "16-20": "2건 관련 경험, 성과 중심 서술"
+          "11-15": "1건 관련 경험 또는 간접 경험"
+          "6-10": "관련성 낮은 경험"
+          "1-5": "경험 서술 없음"
+        academic_basis: "Schmidt & Hunter (1998) - 직무 경험과 직무 성과의 상관관계"
+
+  - name: "역량 및 성장 가능성"
+    scoring_type: "standard"
+    items:
+      - name: "문제 해결 능력"
+        max_score: 20
+        scoring_anchors:
+          "17-20": "복잡한 문제 해결 사례 + 분석적 접근 + 정량적 성과"
+          "13-16": "문제 해결 사례 있으나 분석 깊이 부족"
+          "9-12": "일반적 문제 해결 의지 서술"
+          "5-8": "문제 해결 관련 내용 미흡"
+          "1-4": "관련 내용 없음"
+        academic_basis: "Sternberg (1985) - 실용지능과 문제해결 능력"
+
+      - name: "성장 의지"
+        max_score: 15
+        scoring_anchors:
+          "13-15": "구체적 성장 계획 + 자기개발 이력 + 장기 비전"
+          "9-12": "성장 의지 있으나 계획 구체성 부족"
+          "5-8": "일반적 의지 표현"
+          "1-4": "성장 관련 내용 없음"
+        academic_basis: "Dweck (2006) - 성장 마인드셋 이론"
+
+      - name: "조직 적합성"
+        max_score: 15
+        scoring_anchors:
+          "13-15": "조직 문화·비전에 대한 깊은 이해 + 기여 방안 구체적"
+          "9-12": "조직에 대한 이해 있으나 기여 방안 추상적"
+          "5-8": "일반적 조직 적응 의지"
+          "1-4": "조직 관련 내용 없음"
+        academic_basis: "Kristof-Brown et al. (2005) - Person-Organization Fit 메타분석"

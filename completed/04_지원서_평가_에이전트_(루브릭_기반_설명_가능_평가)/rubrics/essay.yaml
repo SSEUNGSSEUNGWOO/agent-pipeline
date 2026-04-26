@@ -1,0 +1,50 @@
+name: "자유 에세이 평가"
+description: "자유 주제 에세이 또는 동기 서술형 지원서 범용 평가 루브릭"
+total_score: 100
+
+sections:
+  - name: "내용"
+    scoring_type: "standard"
+    items:
+      - name: "주제 명확성"
+        max_score: 25
+        scoring_anchors:
+          "21-25": "명확한 주제 + 일관된 논지 + 독창적 관점"
+          "16-20": "주제 명확하나 독창성 부족"
+          "11-15": "주제 파악 가능하나 논지 산만"
+          "6-10": "주제 모호"
+          "1-5": "주제 불명확"
+        academic_basis: "Flower & Hayes (1981) - 인지적 글쓰기 과정 모델"
+
+      - name: "논리적 구성"
+        max_score: 25
+        scoring_anchors:
+          "21-25": "서론-본론-결론 체계적 + 단락 간 유기적 연결"
+          "16-20": "기본 구성 갖추었으나 연결 다소 부족"
+          "11-15": "구성 있으나 논리적 비약"
+          "6-10": "구성 미흡"
+          "1-5": "구성 없음"
+        academic_basis: "Toulmin (2003) - 논증 구조 모델"
+
+  - name: "표현"
+    scoring_type: "standard"
+    items:
+      - name: "근거 제시"
+        max_score: 25
+        scoring_anchors:
+          "21-25": "구체적 사례/데이터 + 적절한 인용 + 설득력 있는 논증"
+          "16-20": "사례 제시 있으나 구체성 또는 설득력 부족"
+          "11-15": "일반적 근거"
+          "6-10": "근거 미흡"
+          "1-5": "근거 없음"
+        academic_basis: "Graff & Birkenstein (2014) - They Say / I Say 학술 논증 프레임워크"
+
+      - name: "문장력·가독성"
+        max_score: 25
+        scoring_anchors:
+          "21-25": "문장 정확하고 간결 + 전문 용어 적절 사용 + 높은 가독성"
+          "16-20": "대체로 양호하나 일부 어색한 표현"
+          "11-15": "의미 전달 가능하나 다듬어야 할 부분 다수"
+          "6-10": "문장력 미흡, 가독성 낮음"
+          "1-5": "의미 파악 어려움"
+        academic_basis: "Strunk & White (2000) - The Elements of Style 문체론"

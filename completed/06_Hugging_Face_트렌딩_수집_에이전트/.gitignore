@@ -1,0 +1,8 @@
+# Fixed: .gitignore 미작성 (항목 14)
+.env
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+logs/*.log
+output/

@@ -1,0 +1,26 @@
+# Fixed: config.yaml 미작성 (항목 10)
+hf:
+  base_url: "https://huggingface.co/api"
+  categories:
+    - models
+    - datasets
+    - spaces
+  limits:
+    models: 30
+    datasets: 20
+    spaces: 20
+
+output:
+  formats:
+    - json
+    - md
+    - csv
+  dir: output
+
+logging:
+  dir: logs
+  level: INFO
+
+retry:
+  max_attempts: 3
+  delay_seconds: 2

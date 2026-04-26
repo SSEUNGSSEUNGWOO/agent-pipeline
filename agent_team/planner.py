@@ -31,6 +31,21 @@ Common requirements to follow for ALL agents:
 - All API calls must have retry logic (minimum 3 attempts)
 - Idempotent: running multiple times must not cause issues
 
+Known pitfalls — preemptively avoid ALL of these in your plan:
+- load_dotenv() must be the very first call in main.py, before any imports that read env vars
+- setup_logger() must be called before any logger.info/debug/warning calls anywhere
+- Submodule loggers must use logging.getLogger("app." + __name__) so logs propagate to the file handler — never just logging.getLogger(__name__)
+- Every function signature must be 100% consistent: definition, pseudocode, and all call sites must use identical parameter names and counts
+- State file path, category lists, output dir, log dir — all must come from config.yaml, never hardcoded
+- if __name__ == "__main__": guard is required in main.py
+- os.makedirs(dir, exist_ok=True) must be called before every file write operation
+- retry logic must only catch retriable exceptions: RateLimitError, APIConnectionError, APITimeoutError — never catch AuthenticationError or PermissionDeniedError (these should propagate and exit)
+- ID uniqueness for deduplication must include feed_url to prevent collisions across different feeds
+- Atomic file writes: write to a temp file first, then os.replace() to final path
+- All directories (logs/, output/, state parent) must be created at startup, not assumed to exist
+- parse_claude_response must define the exact expected format in the prompt (JSON with fixed keys) — never leave the response format ambiguous
+- Version-pin all dependencies in requirements.txt (e.g. feedparser==6.0.10)
+
 Task:
 {task}
 

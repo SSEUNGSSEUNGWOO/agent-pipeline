@@ -43,10 +43,11 @@ COMPLETED_DIR.mkdir(exist_ok=True)
 def run_claude(prompt: str) -> str:
     """
     Claude Code에 프롬프트 전달하고 응답 반환
-    Claude Code CLI: claude -p "prompt"
+    프롬프트를 stdin으로 넘겨 CLI 인자 길이 제한 우회
     """
     result = subprocess.run(
-        ["claude", "-p", prompt],
+        ["claude", "-p", "-"],
+        input=prompt,
         capture_output=True,
         text=True,
         cwd=str(BASE_DIR)
@@ -56,16 +57,26 @@ def run_claude(prompt: str) -> str:
     return result.stdout
 
 
+def _plan_cache_path(task: dict) -> Path:
+    return IN_PROGRESS_DIR / f"task{task['id']}_plan.md"
+
+
 def phase_plan(task: dict) -> str:
     """
     Phase 1: Planner가 계획서 작성 → Critic 통과될 때까지 반복
+    이전 실행에서 저장된 계획서가 있으면 이어받기
     """
-    log_progress(LOG_PATH, f"[PLANNER] 태스크 {task['id']}: {task['title']} 계획 시작")
+    cache_path = _plan_cache_path(task)
 
-    # 초기 계획서 작성
-    prompt = get_plan_prompt(task)
-    plan = run_claude(prompt)
-    log_progress(LOG_PATH, "[PLANNER] 초기 계획서 작성 완료")
+    if cache_path.exists():
+        plan = cache_path.read_text(encoding="utf-8")
+        log_progress(LOG_PATH, f"[PLANNER] 태스크 {task['id']}: 저장된 계획서 이어받기 ({cache_path.name})")
+    else:
+        log_progress(LOG_PATH, f"[PLANNER] 태스크 {task['id']}: {task['title']} 계획 시작")
+        prompt = get_plan_prompt(task)
+        plan = run_claude(prompt)
+        cache_path.write_text(plan, encoding="utf-8")
+        log_progress(LOG_PATH, "[PLANNER] 초기 계획서 작성 완료")
 
     iteration = 0
     while True:
@@ -79,6 +90,7 @@ def phase_plan(task: dict) -> str:
 
         if passed:
             log_progress(LOG_PATH, f"[CRITIC] 계획서 통과 (#{iteration}회)")
+            cache_path.unlink(missing_ok=True)
             return plan
 
         log_progress(LOG_PATH, f"[CRITIC] 계획서 FAIL → Planner 수정 요청\n{feedback}")
@@ -86,6 +98,7 @@ def phase_plan(task: dict) -> str:
         # Planner가 피드백 반영해서 수정
         fix_prompt = get_plan_fix_prompt(plan, feedback)
         plan = run_claude(fix_prompt)
+        cache_path.write_text(plan, encoding="utf-8")
         log_progress(LOG_PATH, f"[PLANNER] 계획서 수정 완료 (#{iteration}회)\n{plan[:200]}")
 
 
@@ -239,6 +252,40 @@ Output all {NEW_TASKS_PER_BATCH} ideas back to back."""
     log_progress(LOG_PATH, f"[IDEATOR] {len(new_tasks)}개 추가됨:\n{titles}")
 
 
+def get_task_by_id(task_id: int) -> dict | None:
+    """tasks.json에서 특정 id의 태스크 반환"""
+    with open(TASKS_PATH, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+    for task in data['tasks']:
+        if task['id'] == task_id:
+            return task
+    return None
+
+
+def run_single(task_id: int):
+    """특정 태스크 하나만 실행"""
+    task = get_task_by_id(task_id)
+    if task is None:
+        print(f"태스크 {task_id}를 찾을 수 없습니다")
+        sys.exit(1)
+
+    log_progress(LOG_PATH, "=" * 50)
+    log_progress(LOG_PATH, f"🚀 단일 태스크 실행: #{task_id} {task['title']}")
+    log_progress(LOG_PATH, "=" * 50)
+
+    update_task_status(str(TASKS_PATH), task['id'], 'in_progress')
+
+    try:
+        plan = phase_plan(task)
+        work_dir = phase_build(task, plan)
+        phase_log(task, work_dir)
+        log_progress(LOG_PATH, f"✅ 태스크 {task_id} 완료")
+    except Exception as e:
+        log_progress(LOG_PATH, f"❌ 태스크 {task_id} 실패: {e}")
+        update_task_status(str(TASKS_PATH), task['id'], 'error')
+        sys.exit(1)
+
+
 def run():
     """
     메인 루프 — todo 태스크가 없으면 새 아이디어 생성 후 계속 실행
@@ -247,6 +294,16 @@ def run():
     log_progress(LOG_PATH, "🚀 Orchestrator 시작")
     log_progress(LOG_PATH, "=" * 50)
 
+    # 이전 실행에서 중단된 in_progress 태스크를 todo로 리셋
+    with open(TASKS_PATH, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+    for task in data['tasks']:
+        if task['status'] == 'in_progress':
+            task['status'] = 'todo'
+            log_progress(LOG_PATH, f"[RESET] 태스크 {task['id']} in_progress → todo 리셋")
+    with open(TASKS_PATH, 'w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
     completed_count = 0
 
     while True:
@@ -254,9 +311,8 @@ def run():
         task = get_next_task(str(TASKS_PATH))
 
         if task is None:
-            log_progress(LOG_PATH, "🎉 현재 태스크 모두 완료 → 새 아이디어 생성")
-            generate_new_tasks()
-            continue
+            log_progress(LOG_PATH, "🎉 모든 태스크 완료. 종료.")
+            break
 
         log_progress(LOG_PATH, f"\n{'='*50}")
         log_progress(LOG_PATH, f"📋 태스크 {task['id']}: {task['title']}")
@@ -287,4 +343,12 @@ def run():
 
 
 if __name__ == "__main__":
-    run()
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--task-id', type=int, help='특정 태스크 ID만 실행')
+    args = parser.parse_args()
+
+    if args.task_id:
+        run_single(args.task_id)
+    else:
+        run()

@@ -1,0 +1,59 @@
+name: "프로젝트 제안서 평가"
+description: "프로젝트 또는 공모전 제안서 평가 루브릭"
+total_score: 100
+
+sections:
+  - name: "문제 정의"
+    scoring_type: "standard"
+    items:
+      - name: "문제 인식"
+        max_score: 20
+        scoring_anchors:
+          "17-20": "사회적/산업적 문제를 데이터 기반으로 정의 + 시급성 논증"
+          "13-16": "문제 정의 명확하나 데이터 근거 부족"
+          "9-12": "일반적 문제 인식"
+          "5-8": "문제 정의 모호"
+          "1-4": "문제 정의 없음"
+        academic_basis: "Simon (1973) - 구조화된 vs 비구조화된 문제 (Ill-structured problems)"
+
+      - name: "기존 솔루션 분석"
+        max_score: 15
+        scoring_anchors:
+          "13-15": "기존 솔루션 3개 이상 분석 + 한계점 도출"
+          "9-12": "기존 솔루션 일부 분석"
+          "5-8": "피상적 분석"
+          "1-4": "분석 없음"
+        academic_basis: "Porter (1985) - 경쟁 분석 프레임워크"
+
+  - name: "솔루션"
+    scoring_type: "standard"
+    items:
+      - name: "혁신성"
+        max_score: 20
+        scoring_anchors:
+          "17-20": "기존 대비 차별화된 접근 + 기술적 참신성"
+          "13-16": "일부 차별화 요소 존재"
+          "9-12": "기존 접근의 개선 수준"
+          "5-8": "차별화 불명확"
+          "1-4": "혁신성 없음"
+        academic_basis: "Christensen (1997) - 파괴적 혁신 이론"
+
+      - name: "기술 구현 계획"
+        max_score: 25
+        scoring_anchors:
+          "21-25": "상세 아키텍처 + 기술 스택 + 단계별 구현 계획 + 테스트 전략"
+          "16-20": "기술 스택 + 구현 계획 있으나 일부 미흡"
+          "11-15": "대략적 기술 계획"
+          "6-10": "기술 계획 불충분"
+          "1-5": "기술 계획 없음"
+        academic_basis: "Sommerville (2015) - 소프트웨어 공학 설계 원칙"
+
+      - name: "실현 가능성"
+        max_score: 20
+        scoring_anchors:
+          "17-20": "팀 역량 + 자원 + 일정이 현실적 + 리스크 관리 계획"
+          "13-16": "대체로 실현 가능하나 일부 리스크 미고려"
+          "9-12": "실현 가능성 의문 일부"
+          "5-8": "비현실적 계획"
+          "1-4": "실현 불가능"
+        academic_basis: "PMI PMBOK (2021) - 프로젝트 실행 가능성 평가"

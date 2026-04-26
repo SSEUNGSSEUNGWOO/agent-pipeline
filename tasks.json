@@ -21,111 +21,37 @@
     {
       "id": 3,
       "title": "AI 뉴스 수집 + 인사이트 에이전트",
-      "status": "in_progress",
+      "status": "done",
       "prompt": "AI 관련 뉴스를 매일 수집하고 핵심 인사이트를 추출해주는 에이전트를 만들어줘.\n- RSS 피드 기반 수집 (feedparser)\n- config.yaml에서 RSS URL 목록 설정 가능\n- 기본 포함 피드: TechCrunch AI, MIT Technology Review, The Verge AI\n- 수집 항목: 제목, 요약, 링크, 발행시간\n- Claude API로 오늘의 핵심 인사이트 3가지 추출\n- 카테고리 자동 분류 (모델 출시 / 투자 / 정책 / 연구)\n- 결과를 output/YYYY-MM-DD.md 로 저장",
-      "updated_at": "2026-04-03T12:42:52.369189"
+      "updated_at": "2026-04-09T17:21:00.275898"
     },
     {
       "id": 4,
-      "title": "Meta Ad Library 스크래퍼 에이전트",
-      "status": "todo",
-      "prompt": "Meta Ad Library에서 특정 키워드 광고를 수집하고 카피 패턴을 분석해주는 에이전트를 만들어줘.\n- Meta Ad Library 공개 페이지 스크래핑 (selenium + BeautifulSoup)\n- config.yaml에서 검색 키워드, 국가 설정 가능\n- 수집 항목: 광고주명, 광고 카피 텍스트, 시작일, 플랫폼, 광고 형식\n- Claude API로 카피 패턴 분석 (CTA 패턴, 감성, 길이)\n- 결과를 output/YYYY-MM-DD.json + output/YYYY-MM-DD_analysis.md 로 저장\n- 한 번 실행에 최대 50개 광고 수집"
+      "title": "지원서 평가 에이전트 (루브릭 기반 설명 가능 평가)",
+      "status": "done",
+      "prompt": "지원서 텍스트를 입력받아 커스텀 루브릭 기반으로 평가하는 에이전트를 만들어줘. 입력은 항상 정제된 텍스트(TXT)로 들어온다고 가정한다. 파일 파싱(PDF, HWP 등)은 이 에이전트의 범위 밖이다.\n\n핵심 설계 원칙:\n- 지원서 유형이 천차만별이므로 평가 항목을 코드에 하드코딩하지 않고 rubrics/*.yaml로 제어\n- 모든 점수에는 반드시 '왜 이 점수인지(근거)', '왜 이 기준으로 평가하는지(학술 근거)' 두 층의 설명이 붙는다\n\n■ 입력 방식\n- python main.py --file application.txt\n- python main.py --dir applications/  (복수 지원서 비교 평가)\n- python main.py --rubric rubrics/ax_training.yaml --file app.txt  (루브릭 지정)\n- python main.py --calibrate examples/  (캘리브레이션 모드)\n- 입력 형식: TXT만 지원 (사전 정제된 텍스트)\n\n■ 루브릭 정의 구조 (rubrics/*.yaml)\n루브릭 파일 하나가 평가 기준 전체를 정의한다. 예시:\n\nname: AX 교육과정 선발 평가\ndescription: AI 전환 교육과정 지원자 서면 평가\ntotal_score: 50\n\nsections:\n  - name: 서면 내용 평가\n    items:\n      - name: 지원동기\n        max_score: 10\n        weight: 1.0\n        scoring_anchors:  # BARS (Behaviorally Anchored Rating Scale)\n          9-10: 교육 목적과 기관 현안을 구체적으로 연결하고, 교육 후 전파/활용 계획이 실행 가능한 수준으로 명시됨\n          7-8: 기관 맥락과의 연결성이 있으나, 전파 계획의 구체성(대상, 방법, 일정)이 부족\n          5-6: 개인 역량 향상 중심으로 서술. 기관 차원의 활용 계획이 피상적\n          3-4: 지원동기가 모호하거나 일반적. 해당 교육과정 고유의 동기가 드러나지 않음\n          1-2: 지원동기 미기재 또는 교육과정과 무관한 내용\n        evidence_guide: 참여동기, 기대효과, 거점리더 활동 계획 항목에서 근거를 찾는다\n        academic_basis: \"Noe & Wilk (1993) 'Investigation of the factors that influence employees motivation to attend training programs' — 교육 동기가 학습 전이에 미치는 영향\"\n\n      - name: AI·데이터 활용 경력\n        max_score: 20\n        weight: 1.0\n        scoring_anchors:\n          17-20: 2건 이상 프로젝트, 정량적 성과(%, 건수, 시간) 명시, 본인 역할 명확, 다양한 기술스택\n          13-16: 1건 프로젝트, 기술/방법론 명시, 성과 서술이 있으나 정량 수치 부족\n          9-12: 프로젝트 경험 있으나 본인 역할·성과가 불명확\n          5-8: 교육 수료 경험만 있고 실무 프로젝트 경험 없음\n          1-4: AI·데이터 관련 경험 미기재\n        evidence_guide: 프로젝트 경험, 활용 기술, 성과 항목에서 근거를 찾는다. STAR 구조로 분석한다.\n        academic_basis: \"Schmidt & Hunter (1998) 'The validity and utility of selection methods' — 과거 직무 경험(work sample)이 미래 성과의 가장 강력한 예측 변인\"\n\n  - name: 실전 AX 과제 기획\n    total_subscore: 20\n    scoring_type: subscale  # 세부 항목 합산 방식\n    items:\n      - name: 기관 현안 연결성\n        max_score: 4\n        scoring_anchors:\n          4: 기관의 구체적 현안/KPI와 직접 연결, 문제의 범위가 한 과제로 해결 가능한 수준으로 좁혀짐\n          3: 기관 현안과 연결되나, 문제 범위가 광범위하거나 한 과제로 해결이 어려움\n          2: 기관과 관련은 있으나 현안이라기보다 일반적인 업무 영역\n          1: 기관 현안과의 연결성이 불명확\n        academic_basis: \"Kirkpatrick (1994) 4-Level Training Evaluation — Level 4 Results: 교육 성과가 조직 성과로 전이되려면 현안과의 직접 연결이 필수\"\n      - name: 데이터 구체성\n        max_score: 4\n        scoring_anchors:\n          4: 데이터 출처, 종류, 기간, 규모(레코드 수 등)가 모두 명시\n          3: 출처·종류·기간 명시, 규모 정보 부재\n          2: 데이터 종류만 언급, 출처나 기간 불명확\n          1: 활용 데이터 미기재 또는 매우 모호\n        academic_basis: \"Provost & Fawcett (2013) 'Data Science for Business' — 데이터 품질과 구체성이 분석 결과의 신뢰성을 결정\"\n      - name: AI 기술 타당성\n        max_score: 4\n        scoring_anchors:\n          4: 문제 유형에 적합한 기술 선정, 선정 사유·대안 비교 명시\n          3: 적합한 기술 명시, 선정 사유나 대안 비교 부족\n          2: 기술 명시했으나 문제 유형과의 적합성 설명 부족\n          1: AI 기술 미기재 또는 부적합한 기술 제시\n        academic_basis: \"Wolpert (1996) 'No Free Lunch Theorems' — 모든 문제에 최적인 단일 알고리즘은 없으므로 기술 선정의 논리적 근거가 중요\"\n      - name: 이행계획 현실성\n        max_score: 4\n        scoring_anchors:\n          4: 단계별 일정, 마일스톤, 담당 역할이 구체적으로 제시\n          3: 대략적 단계 구분은 있으나 일정·마일스톤 부족\n          2: 최종 활용 방안만 언급, 과정이 불명확\n          1: 이행계획 미기재\n        academic_basis: \"Gollwitzer (1999) 'Implementation Intentions' — 구체적 실행 계획이 목표 달성률을 2~3배 높임\"\n      - name: 기대효과 정량화\n        max_score: 4\n        scoring_anchors:\n          4: 3개 이상 정량 지표(%, 건수, 시간, 비용) 제시, 측정 방법 명시\n          3: 1-2개 정량 지표 제시, 측정 방법 미흡\n          2: 정성적 효과만 서술 (효율화, 개선 등)\n          1: 기대효과 미기재\n        academic_basis: \"Kaplan & Norton (1996) Balanced Scorecard — 성과 측정은 정량 지표로 구체화될 때 관리·개선 가능\"\n\n  - name: 자격증/수료 현황\n    scoring_type: checklist  # 가점 방식\n    items:\n      - name: 관련 자격증·수료\n        max_score: 0\n        bonus_rules:\n          - condition: AI/데이터 직접 관련 자격증\n            bonus: 2\n          - condition: 프로그래밍 관련 수료/자격증\n            bonus: 1\n          - condition: 취득일이 최근 1년 이내\n            bonus: 0.5\n\n■ 기본 제공 루브릭 프리셋\nrubrics/ 폴더에 다음 프리셋을 포함:\n1) ax_training.yaml — AI 전환 교육과정 선발 (위 예시)\n2) job_hiring.yaml — 일반 채용 (이력서+자소서)\n3) scholarship.yaml — 장학금/학술 지원\n4) project_proposal.yaml — 프로젝트/공모전 제안서\n5) essay.yaml — 자유 에세이/동기 서술\n모든 프리셋에 scoring_anchors와 academic_basis 포함.\n--rubric 미지정 시 Claude API로 내용 분석하여 프리셋 자동 선택.\n\n■ 캘리브레이션 (평가 보정)\n사람이 이미 평가한 샘플을 examples/ 폴더에 넣으면 에이전트가 채점 기준선을 학습한다.\n- examples/ 폴더 구조: 지원서텍스트.txt + 평가결과.json (항목별 점수, 근거) 쌍\n- python main.py --calibrate examples/ 실행 시:\n  1) 각 샘플에 대해 에이전트가 독립 평가 수행\n  2) 사람 평가와 에이전트 평가의 항목별 차이를 분석\n  3) 일관되게 차이가 나는 항목의 scoring_anchors 해석 보정 프롬프트 생성\n  4) calibration_profile.json에 보정 파라미터 저장\n- 이후 평가 시 calibration_profile.json이 있으면 자동 적용\n- 보정 리포트 출력: 항목별 사람-에이전트 일치율, 평균 편차, 가장 불일치가 큰 항목\n\n■ 자기 일관성 검증\n- python main.py --consistency-check --file app.txt --runs 3\n- 동일 지원서를 N회 독립 평가하여 항목별 점수 편차 산출\n- 편차가 큰 항목(표준편차 > 1.5) 경고 + 해당 항목의 앵커가 모호할 수 있다는 진단\n- 최종 점수는 N회 평균값 사용\n\n■ 평가 프로세스 (Claude API 멀티스텝)\nStep 1: 지원서 텍스트 수신\nStep 2: 루브릭의 evidence_guide에 따라 각 항목의 근거 문장을 지원서에서 발췌\nStep 3: scoring_anchors 기준으로 점수 부여 — 반드시 두 가지 설명 포함:\n  a) 득점 근거: 이 점수대 앵커와 매칭되는 원문 근거\n  b) 차감 근거: 상위 점수대를 받지 못한 구체적 이유\nStep 4: academic_basis를 인용하여 '왜 이 기준으로 평가하는가' 설명 첨부\nStep 5: 강점 TOP 3 / 보완 필요사항 TOP 3 도출\nStep 6: 후속 질문(면접/면담용) 추천 — 보완 필요사항에서 파생, 확인이 필요한 사항 중심\n\n■ 설명성 강화 — 평가 이의 대응 구조\n평가 결과에 대해 '왜 이 점수인가?' 질문이 올 때 3단계로 답변할 수 있어야 한다:\n1단계 (근거 인용): 지원서 원문에서 해당 점수의 직접적 근거를 발췌하여 제시\n2단계 (기준 설명): scoring_anchors의 해당 구간 vs 상위 구간 비교로 차이를 설명\n3단계 (학술 근거): academic_basis를 인용하여 이 평가 항목 자체가 왜 타당한 기준인지 설명\n\n이 3단계 구조를 리포트에 항목별로 미리 생성해두어, 이의 제기 시 즉시 참조 가능하게 한다.\n각 항목의 리포트 형식:\n| 항목 | 배점 | 득점 | 앵커 구간 |\n| 득점 근거 | (원문 인용 + 앵커 매칭 설명) |\n| 차감 사유 | (상위 구간 미달 이유) |\n| 평가 기준 근거 | (academic_basis 인용) |\n\n■ 지원자 피드백 생성 모드\n- python main.py --file app.txt --feedback\n- 내부 평가용 리포트와 별도로, 지원자에게 전달 가능한 피드백 버전 생성\n- 피드백 버전은: 점수 미포함, 강점과 개선 방향만 서술, 학술 근거 대신 실용적 조언 형태\n- output/feedback_지원자명_YYYY-MM-DD.md로 저장\n\n■ 비교 평가 + 배치 통계\n- python main.py --dir applications/ --rubric rubrics/ax_training.yaml\n- 지원자 간 항목별 비교 매트릭스 + 레이더 차트(matplotlib)\n- 배치 통계: 점수 분포(히스토그램), 항목별 평균/표준편차, 합격선 시뮬레이션\n  - python main.py --dir applications/ --cutoff 34  → 34점 이상 통과자 목록\n- output/eval_batch_stats_YYYY-MM-DD.md로 통계 리포트 저장\n\n■ 편향 방지\n- 블라인드 모드(기본 활성): 이름, 성별, 나이, 출신 학교 등 식별 정보 마스킹 후 평가\n- 평가 항목의 편향 위험도 자체 점검\n\n■ 결과 저장\n- output/eval_지원자명_YYYY-MM-DD.md (개별 리포트 — 3단계 설명 포함)\n- output/feedback_지원자명_YYYY-MM-DD.md (지원자 피드백용)\n- output/eval_comparison_YYYY-MM-DD.md (비교 평가)\n- output/eval_지원자명_YYYY-MM-DD.json (구조화 점수)\n- 평가 이력 SQLite DB 누적 저장\n\n■ 학술 근거 정리 (필수)\n에이전트 빌드 시 rubrics/ 폴더에 REFERENCES.md 파일을 반드시 포함한다.\n이 파일에는 각 루브릭 프리셋에서 사용하는 모든 academic_basis의 원본 논문/연구를 정리한다.\n각 레퍼런스는 다음 형식으로 기재:\n- 정식 인용 (저자, 연도, 제목, 학술지/출판사)\n- 핵심 주장 요약 (2-3문장)\n- 이 에이전트에서 어떤 평가 항목에 왜 적용했는지 (1-2문장)\n- DOI 또는 접근 가능한 URL (있는 경우)\n\n포함해야 할 핵심 레퍼런스 (최소한 이 목록은 반드시 조사하여 정확한 인용 정보로 기재):\n1) Schmidt & Hunter (1998) — 선발 방법의 타당도 메타분석\n2) Kristof-Brown et al. (2005) — Person-Environment Fit 메타분석\n3) Campion, Palmer & Campion (1997) — 구조화 면접 설계\n4) Kirkpatrick (1994) — 교육 평가 4단계 모델\n5) Noe & Wilk (1993) — 교육 참여 동기 연구\n6) Lombardo & Eichinger (2000) — Learning Agility\n7) Chatman (1989) — Organizational Culture Profile (OCP)\n8) Kaplan & Norton (1996) — Balanced Scorecard\n9) Gollwitzer (1999) — Implementation Intentions\n10) Labov (1972) — 서사 분석 프레임워크\n11) Schwartz (1992) — 인간 가치 이론\n12) EEOC Uniform Guidelines on Employee Selection Procedures (1978)\n13) BARS 방법론 — Smith & Kendall (1963) 원문\n14) Provost & Fawcett (2013) — Data Science for Business\n15) Brown (2008) — Design Thinking\n16) Ries (2011) — Lean Startup\n17) Hackman (2002) — Leading Teams\n18) Eurich (2017) — Self-Awareness 연구\n\n웹 검색을 통해 각 논문의 정확한 서지 정보(제목, 학술지명, 권호, 페이지, DOI)를 확인하고 REFERENCES.md에 기재한다.\n부정확한 인용이나 존재하지 않는 논문을 지어내지 않는다.",
+      "updated_at": "2026-04-18T23:10:08.162149"
     },
     {
       "id": 5,
-      "title": "네이버 DataLab 트렌드 모니터 에이전트",
-      "status": "todo",
-      "prompt": "네이버 DataLab API로 키워드 트렌드를 매일 모니터링하는 에이전트를 만들어줘.\n- 네이버 DataLab 검색어 트렌드 API 사용\n- config.yaml에서 모니터링할 키워드 목록 설정 가능\n- 전일 대비 급상승 키워드 감지 (기준값 config로 설정)\n- 급상승 감지시 터미널에 알림 출력\n- matplotlib으로 키워드별 30일 트렌드 그래프 생성\n- 결과를 output/YYYY-MM-DD.csv + output/YYYY-MM-DD.md 로 저장"
+      "title": "AI 기업 블로그 수집 에이전트",
+      "status": "done",
+      "prompt": "주요 AI 기업의 공식 블로그 RSS를 매일 수집하고 한국어로 요약해주는 에이전트를 만들어줘.\n- RSS 피드 기반 수집 (feedparser)\n- config.yaml에서 RSS URL 목록 설정 가능\n- 기본 포함 피드: OpenAI Blog, Anthropic Blog, Google DeepMind Blog, Meta AI Blog, Microsoft AI Blog, AWS Machine Learning Blog, Hugging Face Blog, Mistral AI Blog, NVIDIA AI Blog, xAI Blog, NAVER AI Blog (HyperCLOVA), Kakao Brain Blog, LG AI Research Blog (EXAONE)\n- 마지막 실행 이후 새로 올라온 글만 수집 (state.json으로 상태 관리)\n- 수집 항목: 기업명, 제목, 요약, 링크, 발행시간\n- Claude API로 각 글 3줄 한국어 요약 + 핵심 키워드 3개 추출\n- 카테고리 자동 분류 (연구·기술 동향 / AI 인프라·플랫폼·도구 / AI·데이터 활용 사례 / 정책·거버넌스)\n- 결과를 output/YYYY-MM-DD.md 로 저장 (기업별 섹션 구분)\n- 새 글 없으면 로그에만 기록하고 종료",
+      "updated_at": "2026-04-21T17:41:30.666266"
     },
     {
       "id": 6,
-      "title": "경쟁사 블로그 모니터링 에이전트",
-      "status": "todo",
-      "prompt": "특정 회사들의 블로그를 모니터링하고 새 글이 올라오면 요약해주는 에이전트를 만들어줘.\n- RSS 피드 기반 수집 (feedparser)\n- config.yaml에서 모니터링할 블로그 RSS URL 목록 설정\n- 마지막 실행 이후 새로 올라온 글만 수집 (last_checked.json으로 상태 관리)\n- Claude API로 각 글 3줄 요약 + 핵심 키워드 추출\n- 회사별로 분류해서 output/YYYY-MM-DD.md 로 저장\n- 새 글 없으면 로그에만 기록하고 종료"
+      "title": "Hugging Face 트렌딩 수집 에이전트",
+      "status": "done",
+      "prompt": "Hugging Face에서 매일 트렌딩 모델, 데이터셋, Space를 수집하고 한국어로 요약해주는 에이전트를 만들어줘.\n- Hugging Face 공개 API 사용 (requests)\n- 트렌딩 모델: 이름, 설명, 태스크 유형, 다운로드 수, 좋아요 수 수집\n- 트렌딩 Space: 이름, 설명, 프레임워크, 좋아요 수 수집\n- 트렌딩 데이터셋: 이름, 설명, 다운로드 수 수집\n- config.yaml에서 각 카테고리별 수집 개수 설정 가능 (기본값: 모델 10개, Space 5개, 데이터셋 5개)\n- Claude API로 오늘의 HuggingFace 트렌드 요약 3줄 생성\n- 결과를 output/YYYY-MM-DD.md 로 저장",
+      "updated_at": "2026-04-21T20:41:00.576180"
     },
     {
       "id": 7,
-      "title": "유튜브 트렌딩 분석 에이전트",
-      "status": "todo",
-      "prompt": "YouTube Data API로 트렌딩 영상을 수집하고 콘텐츠 인사이트를 추출해주는 에이전트를 만들어줘.\n- YouTube Data API v3 사용\n- config.yaml에서 국가 코드, 카테고리 설정 가능 (기본: KR)\n- 수집 항목: 제목, 채널명, 조회수, 좋아요수, 댓글수, 태그\n- Claude API로 제목 패턴 분석 (어떤 제목이 트렌딩인지)\n- 카테고리별 상위 10개 수집\n- 결과를 output/YYYY-MM-DD.md 로 저장"
-    },
-    {
-      "id": 8,
-      "title": "코드 리뷰 에이전트",
-      "status": "todo",
-      "prompt": "코드 파일이나 git diff를 입력하면 리뷰해주는 에이전트를 만들어줘.\n- CLI 인자로 파일 경로 받기 (python main.py --file app.py)\n- 리뷰 관점: 버그 가능성 / 성능 / 가독성 / 보안 / 테스트 누락\n- 각 관점별 심각도 표시 (🔴 critical / 🟡 warning / 🟢 suggestion)\n- Claude API 사용\n- 개선된 코드 스니펫도 함께 제안\n- 결과를 터미널 출력 + output/review_YYYY-MM-DD_HH-MM.md 로 저장"
-    },
-    {
-      "id": 9,
-      "title": "회의록 액션아이템 추출 에이전트",
-      "status": "todo",
-      "prompt": "회의록 텍스트 파일을 입력하면 액션아이템을 자동 추출해주는 에이전트를 만들어줘.\n- CLI 인자로 텍스트 파일 경로 받기 (python main.py --file meeting.txt)\n- Claude API로 추출: 액션아이템, 담당자, 데드라인, 우선순위\n- 결과를 markdown 테이블 형식으로 출력\n- 담당자별로 그룹핑한 버전도 함께 출력\n- output/actions_YYYY-MM-DD.md + output/actions_YYYY-MM-DD.json 으로 저장"
-    },
-    {
-      "id": 10,
-      "title": "커뮤니티 버즈 수집 에이전트",
-      "status": "todo",
-      "prompt": "특정 키워드에 대한 커뮤니티 반응을 수집하는 에이전트를 만들어줘.\n- 네이버 블로그/카페 검색 API 사용\n- config.yaml에서 모니터링할 키워드 목록 설정\n- 수집 항목: 제목, 본문 요약, 링크, 작성일\n- Claude API로 긍정/부정/중립 감성 분류\n- 키워드별 감성 비율 집계\n- 결과를 output/YYYY-MM-DD.json + output/YYYY-MM-DD.md 로 저장\n- 키워드당 최대 30개 수집"
-    },
-    {
-      "id": 11,
-      "title": "스타트업 펀딩 뉴스 분석 에이전트",
-      "status": "todo",
-      "prompt": "스타트업 투자/펀딩 뉴스를 매일 수집하고 트렌드를 분석해주는 에이전트를 만들어줘.\n- RSS 피드 + 네이버 뉴스 검색 API 활용\n- 검색 키워드: 투자, 펀딩, 시리즈A/B/C\n- 수집 항목: 회사명, 투자금액, 투자사, 업종, 날짜\n- Claude API로 업종별 분류 + 이번 주 투자 트렌드 요약\n- 누적 데이터로 월별 트렌드 비교\n- 결과를 output/YYYY-MM-DD.md + output/funding_db.json 으로 저장"
-    },
-    {
-      "id": 12,
-      "title": "채용공고 기술스택 트렌드 에이전트",
-      "status": "todo",
-      "prompt": "채용공고를 수집해서 기술스택 트렌드를 분석해주는 에이전트를 만들어줘.\n- 원티드 공개 API 또는 스크래핑 활용\n- config.yaml에서 직군 설정 가능 (예: 백엔드, ML엔지니어)\n- 수집 항목: 회사명, 직군, 요구 기술스택, 경력, 지역\n- 기술스택 빈도 집계 + 상위 20개 랭킹\n- 지난 주 대비 상승/하락 기술 표시\n- 결과를 output/YYYY-MM-DD.md + output/YYYY-MM-DD.csv 로 저장"
-    },
-    {
-      "id": 13,
-      "title": "논문 → 블로그 포스트 변환 에이전트",
-      "status": "todo",
-      "prompt": "arXiv 논문 URL을 입력하면 블로그 포스트로 변환해주는 에이전트를 만들어줘.\n- CLI 인자로 arXiv URL 받기 (python main.py --url https://arxiv.org/abs/xxxx)\n- arxiv API로 논문 메타데이터 + 초록 수집\n- Claude API로 변환: 배경 / 핵심 아이디어 / 방법론 / 결과 / 의의 구조\n- 일반인도 이해할 수 있는 수준으로 비유/예시 포함\n- 결과를 output/논문제목_YYYY-MM-DD.md 로 저장"
-    },
-    {
-      "id": 14,
-      "title": "트렌드 → SNS 포스트 생성 에이전트",
-      "status": "todo",
-      "prompt": "토픽을 입력하면 SNS 포스트를 자동 생성해주는 에이전트를 만들어줘.\n- CLI 인자로 토픽 받기 (python main.py --topic '멀티에이전트 시스템')\n- Claude API로 플랫폼별 포스트 생성\n- 트위터: 280자 이내 스레드 형식 (3~5개)\n- 링크드인: 1500자 이내 전문적 톤\n- 각 플랫폼별 3가지 버전 생성 (톤 다르게)\n- 해시태그 자동 추천\n- 결과를 터미널 출력 + output/sns_YYYY-MM-DD.md 로 저장"
-    },
-    {
-      "id": 15,
-      "title": "뉴스레터 자동 생성 에이전트",
-      "status": "todo",
-      "prompt": "수집된 결과물들을 바탕으로 주간 뉴스레터 초안을 자동 생성해주는 에이전트를 만들어줘.\n- output/ 폴더에서 최근 7일치 마크다운 파일들을 자동으로 읽어옴\n- Claude API로 뉴스레터 초안 생성\n- 구성: 이번 주 하이라이트 3개 / 카테고리별 뉴스 / 추천 아티클\n- HTML 버전 + markdown 버전 둘 다 생성\n- 결과를 output/newsletter_YYYY-WW.md + output/newsletter_YYYY-WW.html 로 저장"
-    },
-    {
-      "id": 16,
-      "title": "아이디어 찬반 토론 에이전트",
-      "status": "todo",
-      "prompt": "비즈니스 아이디어를 입력하면 멀티에이전트가 토론하고 결론을 내리는 시스템을 만들어줘.\n- CLI 인자로 아이디어 받기 (python main.py --idea '배달앱 구독 서비스')\n- Claude API로 3개 에이전트 구현: 낙관론자 / 비판론자 / 심판\n- 토론 2라운드 진행\n- 최종 점수 (실현가능성 / 시장성 / 리스크) 출력\n- 결과를 output/debate_YYYY-MM-DD.md 로 저장"
-    },
-    {
-      "id": 17,
-      "title": "비즈니스 아이디어 검증 에이전트",
-      "status": "todo",
-      "prompt": "비즈니스 아이디어를 입력하면 체계적으로 검증해주는 에이전트를 만들어줘.\n- CLI 인자로 아이디어 받기 (python main.py --idea '카페 창업 분석 SaaS')\n- Claude API로 분석: TAM/SAM/SOM / 경쟁사 / 수익모델 3가지 / 핵심 리스크 5가지 / MVP 로드맵\n- 각 항목 10점 만점 점수 + 총점\n- 결과를 output/validation_YYYY-MM-DD.md 로 저장"
-    },
-    {
-      "id": 18,
-      "title": "부동산 상권 데이터 수집 에이전트",
-      "status": "todo",
-      "prompt": "공공데이터포털 API로 상권 분석 데이터를 수집하는 에이전트를 만들어줘.\n- 공공데이터포털 상권정보 API 사용\n- config.yaml에서 지역(시/구), 업종 설정 가능\n- 수집 항목: 상권명, 업종별 점포수, 개업률, 폐업률, 유동인구\n- 지역별 비교 분석\n- Claude API로 수집된 데이터 인사이트 요약\n- 결과를 output/YYYY-MM-DD.csv + output/YYYY-MM-DD_summary.md 로 저장"
-    },
-    {
-      "id": 19,
-      "title": "개인 학습 요약 에이전트",
-      "status": "todo",
-      "prompt": "텍스트 파일이나 URL을 입력하면 학습 자료로 정리해주는 에이전트를 만들어줘.\n- CLI 인자로 텍스트 파일 또는 URL 받기\n- URL이면 웹페이지 텍스트 추출 (requests + BeautifulSoup)\n- Claude API로 정리: 핵심 개념 5가지 / 플래시카드 10장(Q&A) / 한 줄 요약 / 더 공부할 키워드 5개\n- 결과를 output/study_YYYY-MM-DD.md 로 저장"
-    },
-    {
-      "id": 20,
-      "title": "전체 결과물 대시보드 에이전트",
-      "status": "todo",
-      "prompt": "completed 폴더의 모든 에이전트 결과물을 읽어서 HTML 대시보드를 만들어주는 에이전트를 만들어줘.\n- completed/ 폴더 자동 스캔\n- 각 에이전트의 README.md 읽어서 정보 추출\n- output/ 폴더에서 마지막 실행 결과 파일 날짜 확인\n- HTML 대시보드: 에이전트 목록 + 설명 + 상태 + 마지막 실행 시간 + 결과물 미리보기\n- 결과를 output/dashboard.html 로 저장\n- python main.py 실행하면 브라우저 자동으로 열기"
+      "title": "한국 AI 정책 모니터 에이전트",
+      "status": "done",
+      "prompt": "국내외 AI 정책·규제 관련 보도자료와 뉴스를 매일 수집하고 한국어로 요약해주는 에이전트를 만들어줘.\n- RSS 피드 및 공공 보도자료 페이지 크롤링 (feedparser + requests + BeautifulSoup)\n- config.yaml에서 소스 목록 설정 가능\n- 기본 포함 소스: 과기정통부 보도자료, NIPA 뉴스, 개인정보보호위원회 보도자료, AI타임스, Future of Life Institute 블로그, Stanford HAI 뉴스\n- 마지막 실행 이후 새로 올라온 글만 수집 (state.json으로 상태 관리)\n- 수집 항목: 출처, 제목, 요약, 링크, 발행시간\n- Claude API로 각 글 3줄 한국어 요약 + 정책 영향도 태그 (국내/글로벌, 규제/지원/가이드라인) 추출\n- 결과를 output/YYYY-MM-DD.md 로 저장\n- 새 글 없으면 로그에만 기록하고 종료",
+      "updated_at": "2026-04-22T12:15:01.661096"
     }
   ]
 }

@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ai-news-agent"
+version = "0.1.0"
+requires-python = ">=3.9"
+dependencies = [
+    "feedparser>=6.0,<7",
+    "anthropic>=0.40",
+    "python-dotenv>=1.0,<2",
+    "pyyaml>=6.0,<7",
+    "requests>=2.31,<3",
+    "tenacity>=8.2,<9",
+    "loguru>=0.7,<1",
+]

@@ -1,0 +1,87 @@
+agent:
+  name: "AI 기업 블로그 수집 에이전트"
+  state_file: "state.json"
+  output_dir: "output"
+  log_dir: "logs"
+  lock_file: "agent.lock"
+  # user_agent: "Mozilla/5.0 (compatible; ai-blog-agent/1.0; +https://github.com/실제-저장소-URL)"
+
+collection:
+  request_timeout: 15
+  initial_max_entries: 5
+  max_entries_per_run: 20
+  delay_between_feeds: 1
+  max_summary_chars: 2000
+
+claude:
+  model: "claude-opus-4-6"
+  max_tokens: 1024
+  temperature: 0.3
+  delay_between_calls: 1
+  retry_attempts: 3
+  retry_wait_min: 2
+  retry_wait_max: 10
+
+report:
+  group_by: "company"
+  show_raw_summary: false
+  categories:
+    - "연구·기술 동향"
+    - "AI 인프라·플랫폼·도구"
+    - "AI·데이터 활용 사례"
+    - "정책·거버넌스"
+
+feeds:
+  - name: "OpenAI"
+    url: "https://openai.com/blog/rss.xml"
+    enabled: true
+
+  - name: "Anthropic"
+    url: "https://www.anthropic.com/rss.xml"
+    enabled: true
+
+  - name: "Google DeepMind"
+    url: "https://deepmind.google/blog/rss.xml"
+    enabled: true
+
+  - name: "Meta AI"
+    url: "https://ai.meta.com/blog/feed/"
+    enabled: true
+
+  - name: "Microsoft AI"
+    url: "https://blogs.microsoft.com/ai/feed/"
+    enabled: true
+
+  - name: "AWS Machine Learning"
+    url: "https://aws.amazon.com/blogs/machine-learning/feed/"
+    enabled: true
+
+  - name: "Hugging Face"
+    url: "https://huggingface.co/blog/feed.xml"
+    enabled: true
+
+  - name: "Mistral AI"
+    url: "https://mistral.ai/feed.xml"
+    enabled: true
+
+  - name: "NVIDIA AI"
+    url: "https://blogs.nvidia.com/blog/category/artificial-intelligence/feed/"
+    enabled: true
+
+  - name: "xAI"
+    url: "https://x.ai/blog/rss.xml"
+    enabled: true
+
+  # 아래 한국 기업 3개의 RSS URL은 실제 제공 여부가 불확실합니다.
+  # 첫 실행 전 수동으로 URL 유효성을 확인하세요.
+  - name: "NAVER AI (HyperCLOVA)"
+    url: "https://clova.ai/ko/research/blog.xml"
+    enabled: true
+
+  - name: "Kakao Brain"
+    url: "https://kakaotech.com/rss"
+    enabled: true
+
+  - name: "LG AI Research (EXAONE)"
+    url: "https://www.lgresearch.ai/blog/rss"
+    enabled: true

@@ -1,0 +1,33 @@
+# 환경 변수
+.env
+
+# Python 캐시
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+
+# 가상환경
+venv/
+.venv/
+env/
+
+# 에이전트 런타임 파일
+state.json
+state.json.tmp
+agent.lock
+logs/
+output/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# macOS
+.DS_Store

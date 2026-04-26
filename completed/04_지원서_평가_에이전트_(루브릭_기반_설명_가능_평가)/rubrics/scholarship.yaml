@@ -1,0 +1,58 @@
+name: "장학금/학술 지원 평가"
+description: "장학금 또는 학술 연구 지원 신청서 평가 루브릭"
+total_score: 100
+
+sections:
+  - name: "학업 역량"
+    scoring_type: "standard"
+    items:
+      - name: "학업 성취도"
+        max_score: 25
+        scoring_anchors:
+          "21-25": "우수한 학업 성적 + 관련 분야 심화 학습 이력"
+          "16-20": "양호한 학업 성적 + 일부 심화 학습"
+          "11-15": "평균적 학업 수준"
+          "6-10": "학업 성취 관련 서술 부족"
+          "1-5": "관련 내용 없음"
+        academic_basis: "Astin (1993) - 학생 참여 이론 (Student Involvement Theory)"
+
+      - name: "연구 계획"
+        max_score: 30
+        scoring_anchors:
+          "25-30": "명확한 연구 문제 + 방법론 + 기대 기여 + 실현 가능성"
+          "19-24": "연구 문제 명확하나 방법론 또는 기여 불충분"
+          "13-18": "연구 주제 있으나 구체성 부족"
+          "7-12": "연구 방향만 언급"
+          "1-6": "연구 계획 없음"
+        academic_basis: "Creswell (2014) - 연구 설계의 핵심 요소"
+
+  - name: "사회적 기여"
+    scoring_type: "standard"
+    items:
+      - name: "사회 공헌 의지"
+        max_score: 20
+        scoring_anchors:
+          "17-20": "구체적 사회 공헌 활동 이력 + 향후 계획"
+          "13-16": "공헌 의지와 일부 활동 이력"
+          "9-12": "일반적 공헌 의지 표현"
+          "5-8": "관련 내용 미흡"
+          "1-4": "관련 내용 없음"
+        academic_basis: "Sen (1999) - 역량 접근법 (Capability Approach)"
+
+      - name: "리더십"
+        max_score: 15
+        scoring_anchors:
+          "13-15": "리더십 경험 구체적 + 팀 성과에 기여"
+          "9-12": "리더십 경험 있으나 성과 불명확"
+          "5-8": "일반적 리더십 의지"
+          "1-4": "관련 내용 없음"
+        academic_basis: "Bass & Riggio (2006) - 변혁적 리더십 이론"
+
+      - name: "재정적 필요성"
+        max_score: 10
+        scoring_anchors:
+          "9-10": "재정적 어려움 구체적 서술 + 장학금 활용 계획"
+          "6-8": "재정적 필요성 언급 + 간단한 활용 계획"
+          "3-5": "일반적 필요성 언급"
+          "1-2": "관련 내용 없음"
+        academic_basis: "Perna (2006) - 고등교육 접근성과 재정 지원의 관계"
